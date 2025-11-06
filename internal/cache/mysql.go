@@ -20,7 +20,7 @@ const databaseKeyPrefix = "cache:"
 const createTableQuery = `
 CREATE TABLE IF NOT EXISTS kv_store (
   ` + "`key`" + ` VARCHAR(128) PRIMARY KEY,
-  ` + "`value`" + ` MEDIUMTEXT NOT NULL,
+  ` + "`value`" + ` MEDIUMBLOB NOT NULL,
   ` + "`expires_at`" + ` TIMESTAMP NULL DEFAULT NULL,
   INDEX idx_expires (` + "`expires_at`" + `)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4

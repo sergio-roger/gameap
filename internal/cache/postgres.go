@@ -18,10 +18,10 @@ const postgresKVStoreTable = "kv_store"
 const postgresDatabaseKeyPrefix = "cache:"
 
 const postgresCreateTableQuery = `
-CREATE TABLE IF NOT EXISTS kv_store (
+CREATE UNLOGGED TABLE IF NOT EXISTS kv_store (
   key VARCHAR(128) PRIMARY KEY,
-  value TEXT NOT NULL,
-  expires_at TIMESTAMP NULL DEFAULT NULL
+  value BYTEA NOT NULL,
+  expires_at TIMESTAMPTZ NULL DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_kv_store_key_hash ON kv_store USING HASH (key);
