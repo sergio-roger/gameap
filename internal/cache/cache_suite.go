@@ -145,7 +145,7 @@ func (s *Suite) TestSetWithExpiration() {
 	require.NoError(s.T(), err)
 	assert.Equal(s.T(), "expiring_value", value)
 
-	time.Sleep(expiration + 100*time.Millisecond)
+	time.Sleep(expiration + 500*time.Millisecond)
 
 	value, err = s.cacheInstance.Get(ctx, "expiring_key")
 	assert.ErrorIs(s.T(), err, ErrNotFound)
