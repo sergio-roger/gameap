@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/caarlos0/env/v11"
 	"github.com/gameap/gameap/internal/application/defaults"
 	"github.com/pkg/errors"
@@ -82,6 +84,8 @@ func LoadConfig() (*Config, error) {
 
 	setDefaultConfigValues(&cfg)
 
+	normalizeConfigValues(&cfg)
+
 	return &cfg, nil
 }
 
@@ -92,5 +96,20 @@ func setDefaultConfigValues(cfg *Config) {
 
 	if cfg.Legacy.EnvPath == "" {
 		cfg.Legacy.EnvPath = defaults.LegacyEnvPath
+	}
+}
+
+func normalizeConfigValues(cfg *Config) {
+	cfg.DatabaseDriver = strings.ToLower(cfg.DatabaseDriver)
+
+	switch cfg.DatabaseDriver {
+	case "postgres", "postgresql", "pgx", "pg", "pgsql": //nolint:goconst
+		cfg.DatabaseDriver = "pgx"
+	}
+
+	cfg.Cache.Driver = strings.ToLower(cfg.Cache.Driver)
+	switch cfg.Cache.Driver {
+	case "postgres", "postgresql", "pgx", "pg", "pgsql": //nolint:goconst,nolintlint
+		cfg.Cache.Driver = "postgres"
 	}
 }

@@ -8,9 +8,10 @@ import (
 	"time"
 
 	"github.com/gameap/gameap/internal/cache"
-	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL driver
 )
 
 func TestPostgreSQLCache(t *testing.T) {
@@ -19,7 +20,7 @@ func TestPostgreSQLCache(t *testing.T) {
 		t.Skip("Skipping PostgreSQL cache tests because TEST_POSTGRES_DSN is not set")
 	}
 
-	db, err := sql.Open("postgres", testPostgresDSN)
+	db, err := sql.Open("pgx", testPostgresDSN)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -40,7 +41,7 @@ func TestPostgreSQLCacheCleanupExpired(t *testing.T) {
 		t.Skip("Skipping PostgreSQL cache tests because TEST_POSTGRES_DSN is not set")
 	}
 
-	db, err := sql.Open("postgres", testPostgresDSN)
+	db, err := sql.Open("pgx", testPostgresDSN)
 	require.NoError(t, err)
 	defer db.Close()
 
@@ -94,7 +95,7 @@ func BenchmarkPostgreSQLCache_Set(b *testing.B) {
 		b.Skip("Skipping PostgreSQL cache benchmarks because TEST_POSTGRES_DSN is not set")
 	}
 
-	db, err := sql.Open("postgres", testPostgresDSN)
+	db, err := sql.Open("pgx", testPostgresDSN)
 	require.NoError(b, err)
 	defer db.Close()
 
@@ -116,7 +117,7 @@ func BenchmarkPostgreSQLCache_Get(b *testing.B) {
 		b.Skip("Skipping PostgreSQL cache benchmarks because TEST_POSTGRES_DSN is not set")
 	}
 
-	db, err := sql.Open("postgres", testPostgresDSN)
+	db, err := sql.Open("pgx", testPostgresDSN)
 	require.NoError(b, err)
 	defer db.Close()
 
@@ -143,7 +144,7 @@ func BenchmarkPostgreSQLCache_Delete(b *testing.B) {
 		b.Skip("Skipping PostgreSQL cache benchmarks because TEST_POSTGRES_DSN is not set")
 	}
 
-	db, err := sql.Open("postgres", testPostgresDSN)
+	db, err := sql.Open("pgx", testPostgresDSN)
 	require.NoError(b, err)
 	defer db.Close()
 

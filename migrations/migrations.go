@@ -98,6 +98,7 @@ func MySQLMigrations(_ context.Context, _ container) (goose.Migrations, error) {
 const (
 	databaseDriverMySQL    = "mysql"
 	databaseDriverPostgres = "postgres"
+	databaseDriverPGX      = "pgx"
 	databaseDriverSQLite   = "sqlite"
 	databaseDriverInMemory = "inmemory"
 )
@@ -106,6 +107,14 @@ var driverToDialectMap = map[string]goose.Dialect{
 	databaseDriverMySQL:    goose.DialectMySQL,
 	databaseDriverSQLite:   goose.DialectSQLite3,
 	databaseDriverPostgres: goose.DialectPostgres,
+	databaseDriverPGX:      goose.DialectPostgres,
+}
+
+var driverToFSDirMap = map[string]string{
+	databaseDriverMySQL:    "mysql",
+	databaseDriverSQLite:   "sqlite",
+	databaseDriverPostgres: "postgres",
+	databaseDriverPGX:      "postgres",
 }
 
 func Run(ctx context.Context, c container) error {
@@ -126,7 +135,7 @@ func Run(ctx context.Context, c container) error {
 		}
 
 		migratorOptions = append(migratorOptions, goose.WithGoMigrations(mg...))
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		mg, err := PostgresMigrations(ctx, c)
 		if err != nil {
 			return errors.Wrap(err, "failed to get postgres migrations")
@@ -147,7 +156,12 @@ func Run(ctx context.Context, c container) error {
 		return errors.Errorf("unsupported database driver: %s", c.Config().DatabaseDriver)
 	}
 
-	migrationsSubFS, err := fs.Sub(GetFS(), c.Config().DatabaseDriver)
+	dir, ok := driverToFSDirMap[c.Config().DatabaseDriver]
+	if !ok {
+		return errors.Errorf("unsupported database driver for migrations: %s", c.Config().DatabaseDriver)
+	}
+
+	migrationsSubFS, err := fs.Sub(GetFS(), dir)
 	if err != nil {
 		return errors.Wrap(err, "failed to create sub filesystem")
 	}

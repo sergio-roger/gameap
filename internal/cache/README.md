@@ -46,8 +46,8 @@ BenchmarkMySQLCache_Delete-14    	    1573	    820273 ns/op
 cpu: Apple M3 Max
 
 BenchmarkPostgreSQLCache_Get
-BenchmarkPostgreSQLCache_Get-14    	    4622	    294941 ns/op
+BenchmarkPostgreSQLCache_Get-14    	    7800	    147640 ns/op
 
 BenchmarkPostgreSQLCache_Delete
-BenchmarkPostgreSQLCache_Delete-14    	    2028	    639658 ns/op
+BenchmarkPostgreSQLCache_Delete-14    	    3058	    331498 ns/op
 ```

@@ -37,6 +37,7 @@ import (
 const (
 	databaseDriverMySQL    = "mysql"
 	databaseDriverPostgres = "postgres"
+	databaseDriverPGX      = "pgx"
 	databaseDriverSQLite   = "sqlite"
 	databaseDriverInMemory = "inmemory"
 )
@@ -197,7 +198,7 @@ func (c *Container) createGameRepository() repositories.GameRepository {
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		baseRepo = mysql.NewGameRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		baseRepo = postgres.NewGameRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		baseRepo = sqlite.NewGameRepository(c.TransactionalDB())
@@ -234,7 +235,7 @@ func (c *Container) createGameModRepository() repositories.GameModRepository {
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		baseRepo = mysql.NewGameModRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		baseRepo = postgres.NewGameModRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		baseRepo = sqlite.NewGameModRepository(c.TransactionalDB())
@@ -270,7 +271,7 @@ func (c *Container) createServerRepository() repositories.ServerRepository {
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		return mysql.NewServerRepository(c.TransactionalDB(), c.TransactionManager())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		return postgres.NewServerRepository(c.TransactionalDB(), c.TransactionManager())
 	case databaseDriverSQLite:
 		return sqlite.NewServerRepository(c.TransactionalDB(), c.TransactionManager())
@@ -338,7 +339,7 @@ func (c *Container) createUserRepository() repositories.UserRepository {
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		baseRepo = mysql.NewUserRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		baseRepo = postgres.NewUserRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		baseRepo = sqlite.NewUserRepository(c.TransactionalDB())
@@ -434,7 +435,7 @@ func (c *Container) createRBACRepository() repositories.RBACRepository {
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		baseRepo = mysql.NewRBACRepository(c.TransactionalDB(), c.TransactionManager())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		baseRepo = postgres.NewRBACRepository(c.TransactionalDB(), c.TransactionManager())
 	case databaseDriverSQLite:
 		baseRepo = sqlite.NewRBACRepository(c.TransactionalDB(), c.TransactionManager())
@@ -472,7 +473,7 @@ func (c *Container) createPersonalAccessTokenRepository() repositories.PersonalA
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		baseRepo = mysql.NewPersonalAccessTokenRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		baseRepo = postgres.NewPersonalAccessTokenRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		baseRepo = sqlite.NewPersonalAccessTokenRepository(c.TransactionalDB())
@@ -508,7 +509,7 @@ func (c *Container) createDaemonTaskRepository() repositories.DaemonTaskReposito
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		return mysql.NewDaemonTaskRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		return postgres.NewDaemonTaskRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		return sqlite.NewDaemonTaskRepository(c.TransactionalDB())
@@ -532,7 +533,7 @@ func (c *Container) createServerTaskRepository() repositories.ServerTaskReposito
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		return mysql.NewServerTaskRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		return postgres.NewServerTaskRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		return sqlite.NewServerTaskRepository(c.TransactionalDB())
@@ -556,7 +557,7 @@ func (c *Container) createServerTaskFailRepository() repositories.ServerTaskFail
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		return mysql.NewServerTaskFailRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		return postgres.NewServerTaskFailRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		return sqlite.NewServerTaskFailRepository(c.TransactionalDB())
@@ -580,7 +581,7 @@ func (c *Container) createServerSettingRepository() repositories.ServerSettingRe
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		return mysql.NewServerSettingRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		return postgres.NewServerSettingRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		return sqlite.NewServerSettingRepository(c.TransactionalDB())
@@ -606,7 +607,7 @@ func (c *Container) createNodeRepository() repositories.NodeRepository {
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		baseRepo = mysql.NewNodeRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		baseRepo = postgres.NewNodeRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		baseRepo = sqlite.NewNodeRepository(c.TransactionalDB())
@@ -665,7 +666,7 @@ func (c *Container) createClientCertificateRepository() repositories.ClientCerti
 	switch c.config.DatabaseDriver {
 	case databaseDriverMySQL:
 		return mysql.NewClientCertificateRepository(c.TransactionalDB())
-	case databaseDriverPostgres:
+	case databaseDriverPostgres, databaseDriverPGX:
 		return postgres.NewClientCertificateRepository(c.TransactionalDB())
 	case databaseDriverSQLite:
 		return sqlite.NewClientCertificateRepository(c.TransactionalDB())

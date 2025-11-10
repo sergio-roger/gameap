@@ -9,14 +9,14 @@ import (
 	"github.com/gameap/gameap/internal/config"
 	"github.com/gameap/gameap/migrations"
 	"github.com/gameap/gameap/pkg/testcontainer"
-	_ "github.com/lib/pq" // PostgreSQL driver
+	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL driver
 )
 
 // SetupTestDB sets up and returns a test database connection for PostgreSQL tests.
 func SetupTestDB(t *testing.T, postgresDSN string) *sql.DB {
 	t.Helper()
 
-	db, err := sql.Open("postgres", postgresDSN)
+	db, err := sql.Open("pgx", postgresDSN)
 	if err != nil {
 		t.Fatalf("failed to open PostgreSQL database: %v", err)
 	}

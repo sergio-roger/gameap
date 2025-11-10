@@ -233,20 +233,7 @@ func (s ServerSettingValue) Value() (driver.Value, error) {
 		return nil, nil
 	}
 
-	switch s.tp {
-	case serverSettingTypeString:
-		v, _ := s.String()
+	v, _ := s.String()
 
-		return v, nil
-	case serverSettingTypeBool:
-		v, _ := s.Bool()
-
-		return v, nil
-	case serverSettingTypeInt:
-		v, _ := s.Int()
-
-		return v, nil
-	default:
-		return nil, nil
-	}
+	return v, nil
 }

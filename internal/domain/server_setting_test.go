@@ -490,22 +490,22 @@ func TestServerSettingValue_Value(t *testing.T) {
 		{
 			name:  "bool_true",
 			value: NewServerSettingValue(true),
-			want:  true,
+			want:  "true",
 		},
 		{
 			name:  "bool_false",
 			value: NewServerSettingValue(false),
-			want:  false,
+			want:  "false",
 		},
 		{
 			name:  "int_value",
 			value: NewServerSettingValue(42),
-			want:  42,
+			want:  "42",
 		},
 		{
 			name:  "unknown_type",
 			value: ServerSettingValue{value: "test", tp: serverSettingTypeUnknown},
-			want:  nil,
+			want:  "",
 		},
 	}
 
