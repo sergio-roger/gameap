@@ -535,7 +535,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				return &mockDaemonCommands{}
 			},
 			expectedStatus: http.StatusForbidden,
-			wantError:      "user does not have permission to send console commands",
+			wantError:      "user does not have required permissions",
 			expectSuccess:  false,
 		},
 		{
@@ -818,8 +818,8 @@ func TestHandler_NewHandler(t *testing.T) {
 
 	require.NotNil(t, handler)
 	assert.NotNil(t, handler.serverFinder)
+	assert.NotNil(t, handler.abilityChecker)
 	assert.Equal(t, nodeRepo, handler.nodeRepo)
-	assert.Equal(t, rbacService, handler.rbac)
 	assert.Equal(t, mockDaemon, handler.daemonCommands)
 	assert.Equal(t, mockFS, handler.fileService)
 	assert.Equal(t, responder, handler.responder)

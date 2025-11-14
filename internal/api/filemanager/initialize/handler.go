@@ -5,6 +5,7 @@ import (
 
 	"github.com/gameap/gameap/internal/api/base"
 	serversbase "github.com/gameap/gameap/internal/api/servers/base"
+	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/repositories"
 	"github.com/gameap/gameap/pkg/api"
 	"github.com/gameap/gameap/pkg/auth"
@@ -12,8 +13,9 @@ import (
 )
 
 type Handler struct {
-	serverFinder *serversbase.ServerFinder
-	responder    base.Responder
+	serverFinder   *serversbase.ServerFinder
+	abilityChecker *serversbase.AbilityChecker
+	responder      base.Responder
 }
 
 func NewHandler(
@@ -22,8 +24,9 @@ func NewHandler(
 	responder base.Responder,
 ) *Handler {
 	return &Handler{
-		serverFinder: serversbase.NewServerFinder(serverRepo, rbac),
-		responder:    responder,
+		serverFinder:   serversbase.NewServerFinder(serverRepo, rbac),
+		abilityChecker: serversbase.NewAbilityChecker(rbac),
+		responder:      responder,
 	}
 }
 
@@ -52,7 +55,19 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.serverFinder.FindUserServer(ctx, session.User, serverID)
+	server, err := h.serverFinder.FindUserServer(ctx, session.User, serverID)
+	if err != nil {
+		h.responder.WriteError(ctx, rw, err)
+
+		return
+	}
+
+	err = h.abilityChecker.CheckOrError(
+		ctx,
+		session.User.ID,
+		server.ID,
+		[]domain.AbilityName{domain.AbilityNameGameServerFiles},
+	)
 	if err != nil {
 		h.responder.WriteError(ctx, rw, err)
 

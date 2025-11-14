@@ -36,6 +36,26 @@ var testUser2 = domain.User{
 	Email: "admin@example.com",
 }
 
+func allowUserAbilityForServer(
+	t *testing.T,
+	repo *inmemory.RBACRepository,
+	userID uint,
+	serverID uint,
+	abilityName domain.AbilityName,
+) {
+	t.Helper()
+
+	ability := domain.CreateAbilityForEntity(abilityName, serverID, domain.EntityTypeServer)
+	require.NoError(t, repo.SaveAbility(context.Background(), &ability))
+
+	require.NoError(t, repo.Allow(
+		context.Background(),
+		userID,
+		domain.EntityTypeUser,
+		[]domain.Ability{ability},
+	))
+}
+
 func TestHandler_ServeHTTP(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -60,7 +80,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 				startCmd := testStartCommand
 				server := &domain.Server{
@@ -81,6 +101,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerStart)
 			},
 			wantStatus: http.StatusOK,
 			wantTaskID: true,
@@ -98,7 +121,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 				server := &domain.Server{
 					ID:         1,
@@ -117,6 +140,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerStop)
 			},
 			wantStatus: http.StatusOK,
 			wantTaskID: true,
@@ -134,7 +160,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 				startCmd := testStartCommand
 				server := &domain.Server{
@@ -155,6 +181,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerRestart)
 			},
 			wantStatus: http.StatusOK,
 			wantTaskID: true,
@@ -172,7 +201,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 				server := &domain.Server{
 					ID:         1,
@@ -191,6 +220,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerUpdate)
 			},
 			wantStatus: http.StatusOK,
 			wantTaskID: true,
@@ -208,7 +240,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 				server := &domain.Server{
 					ID:         1,
@@ -227,6 +259,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerUpdate)
 			},
 			wantStatus: http.StatusOK,
 			wantTaskID: true,
@@ -244,7 +279,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 				server := &domain.Server{
 					ID:         1,
@@ -263,6 +298,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerUpdate)
 			},
 			wantStatus: http.StatusOK,
 			wantTaskID: true,
@@ -430,7 +468,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			wantTaskID: true,
 		},
 		{
-			name:     "start_command_fails_when_server_has_no_start_command",
+			name:     "user_without_start_ability_gets_forbidden",
 			serverID: "1",
 			command:  "start",
 			setupAuth: func() context.Context {
@@ -442,7 +480,88 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+				startCmd := testStartCommand
+				server := &domain.Server{
+					ID:           1,
+					UUID:         uuid.New(),
+					UUIDShort:    "short1",
+					Enabled:      true,
+					Installed:    1,
+					Name:         "Test Server",
+					GameID:       "cstrike",
+					DSID:         1,
+					GameModID:    1,
+					ServerIP:     "192.168.1.1",
+					ServerPort:   27015,
+					StartCommand: &startCmd,
+					CreatedAt:    &now,
+					UpdatedAt:    &now,
+				}
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+			},
+			wantStatus: http.StatusForbidden,
+			wantError:  "user does not have required permissions",
+		},
+		{
+			name:     "user_with_start_ability_can_start_server",
+			serverID: "1",
+			command:  "start",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "testuser",
+					Email: "test@example.com",
+					User:  &testUser1,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+				startCmd := testStartCommand
+				server := &domain.Server{
+					ID:           1,
+					UUID:         uuid.New(),
+					UUIDShort:    "short1",
+					Enabled:      true,
+					Installed:    1,
+					Name:         "Test Server",
+					GameID:       "cstrike",
+					DSID:         1,
+					GameModID:    1,
+					ServerIP:     "192.168.1.1",
+					ServerPort:   27015,
+					StartCommand: &startCmd,
+					CreatedAt:    &now,
+					UpdatedAt:    &now,
+				}
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerStart)
+			},
+			wantStatus: http.StatusOK,
+			wantTaskID: true,
+		},
+		{
+			name:     "user_without_stop_ability_gets_forbidden",
+			serverID: "1",
+			command:  "stop",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "testuser",
+					Email: "test@example.com",
+					User:  &testUser1,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 				server := &domain.Server{
 					ID:         1,
@@ -461,6 +580,125 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+			},
+			wantStatus: http.StatusForbidden,
+			wantError:  "user does not have required permissions",
+		},
+		{
+			name:     "user_with_stop_ability_can_stop_server",
+			serverID: "1",
+			command:  "stop",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "testuser",
+					Email: "test@example.com",
+					User:  &testUser1,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.New(),
+					UUIDShort:  "short1",
+					Enabled:    true,
+					Installed:  1,
+					Name:       "Test Server",
+					GameID:     "cstrike",
+					DSID:       1,
+					GameModID:  1,
+					ServerIP:   "192.168.1.1",
+					ServerPort: 27015,
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerStop)
+			},
+			wantStatus: http.StatusOK,
+			wantTaskID: true,
+		},
+		{
+			name:     "user_with_update_ability_can_update_server",
+			serverID: "1",
+			command:  "update",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "testuser",
+					Email: "test@example.com",
+					User:  &testUser1,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.New(),
+					UUIDShort:  "short1",
+					Enabled:    true,
+					Installed:  1,
+					Name:       "Test Server",
+					GameID:     "cstrike",
+					DSID:       1,
+					GameModID:  1,
+					ServerIP:   "192.168.1.1",
+					ServerPort: 27015,
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerUpdate)
+			},
+			wantStatus: http.StatusOK,
+			wantTaskID: true,
+		},
+		{
+			name:     "start_command_fails_when_server_has_no_start_command",
+			serverID: "1",
+			command:  "start",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "testuser",
+					Email: "test@example.com",
+					User:  &testUser1,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.New(),
+					UUIDShort:  "short1",
+					Enabled:    true,
+					Installed:  1,
+					Name:       "Test Server",
+					GameID:     "cstrike",
+					DSID:       1,
+					GameModID:  1,
+					ServerIP:   "192.168.1.1",
+					ServerPort: 27015,
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerCommon)
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerStart)
 			},
 			wantStatus: http.StatusInternalServerError,
 			wantError:  "Internal Server Error",
@@ -794,31 +1032,37 @@ func TestHandler_DaemonTaskCreation(t *testing.T) {
 		name             string
 		command          string
 		expectedTaskType domain.DaemonTaskType
+		abilities        []domain.AbilityName
 	}{
 		{
 			name:             "start_command_creates_start_task",
 			command:          "start",
 			expectedTaskType: domain.DaemonTaskTypeServerStart,
+			abilities:        []domain.AbilityName{domain.AbilityNameGameServerCommon, domain.AbilityNameGameServerStart},
 		},
 		{
 			name:             "stop_command_creates_stop_task",
 			command:          "stop",
 			expectedTaskType: domain.DaemonTaskTypeServerStop,
+			abilities:        []domain.AbilityName{domain.AbilityNameGameServerCommon, domain.AbilityNameGameServerStop},
 		},
 		{
 			name:             "restart_command_creates_restart_task",
 			command:          "restart",
 			expectedTaskType: domain.DaemonTaskTypeServerRestart,
+			abilities:        []domain.AbilityName{domain.AbilityNameGameServerCommon, domain.AbilityNameGameServerRestart},
 		},
 		{
 			name:             "update_command_creates_update_task",
 			command:          "update",
 			expectedTaskType: domain.DaemonTaskTypeServerUpdate,
+			abilities:        []domain.AbilityName{domain.AbilityNameGameServerCommon, domain.AbilityNameGameServerUpdate},
 		},
 		{
 			name:             "install_command_creates_install_task",
 			command:          "install",
 			expectedTaskType: domain.DaemonTaskTypeServerInstall,
+			abilities:        []domain.AbilityName{domain.AbilityNameGameServerCommon, domain.AbilityNameGameServerUpdate},
 		},
 	}
 
@@ -858,6 +1102,11 @@ func TestHandler_DaemonTaskCreation(t *testing.T) {
 			}
 			require.NoError(t, serverRepo.Save(context.Background(), server))
 			serverRepo.AddUserServer(testUser1.ID, server.ID)
+
+			// Setup abilities
+			for _, abilityName := range tt.abilities {
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, abilityName)
+			}
 
 			handler := NewHandler(serverRepo, serverControlService, rbacService, responder)
 

@@ -2,12 +2,12 @@ package application
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/samber/lo"
 )
 
@@ -34,7 +34,7 @@ func loadLegacyEnv(legacyEnvFilePath string) error {
 func parseLegacyEnvFile(path string) (map[string]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to open legacy env file: %s", path)
 	}
 	defer func(file *os.File) {
 		err := file.Close()

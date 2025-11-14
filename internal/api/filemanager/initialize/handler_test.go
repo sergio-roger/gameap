@@ -16,6 +16,7 @@ import (
 	"github.com/gameap/gameap/pkg/auth"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,6 +31,18 @@ var testUser2 = domain.User{
 	ID:    2,
 	Login: "admin",
 	Email: "admin@example.com",
+}
+
+var testUser3 = domain.User{
+	ID:    3,
+	Login: "user_with_permission",
+	Email: "user_perm@example.com",
+}
+
+var testUser4 = domain.User{
+	ID:    4,
+	Login: "user_without_permission",
+	Email: "user_no_perm@example.com",
 }
 
 func TestHandler_ServeHTTP(t *testing.T) {
@@ -54,7 +67,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 
 				server := &domain.Server{
@@ -78,6 +91,21 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				ability := &domain.Ability{
+					Name:       domain.AbilityNameGameServerFiles,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				}
+				require.NoError(t, rbacRepo.SaveAbility(context.Background(), ability))
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(uint(1)),
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					Forbidden:  false,
+				}
+				require.NoError(t, rbacRepo.SavePermission(context.Background(), permission))
 			},
 			expectedStatus: http.StatusOK,
 			expectConfig:   true,
@@ -219,6 +247,147 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectConfig:   true,
 		},
+		{
+			name:     "user_with_files_permission",
+			serverID: "1",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user_with_permission",
+					Email: "user_perm@example.com",
+					User:  &testUser3,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:            1,
+					UUID:          uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:     "short1",
+					Enabled:       true,
+					Installed:     1,
+					Blocked:       false,
+					Name:          "Test Server 1",
+					GameID:        "cs",
+					DSID:          1,
+					GameModID:     1,
+					ServerIP:      "127.0.0.1",
+					ServerPort:    27015,
+					Dir:           "/home/gameap/servers/test1",
+					ProcessActive: false,
+					CreatedAt:     &now,
+					UpdatedAt:     &now,
+				}
+
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(3, 1)
+
+				ability := &domain.Ability{
+					Name:       domain.AbilityNameGameServerFiles,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				}
+				require.NoError(t, rbacRepo.SaveAbility(context.Background(), ability))
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(uint(3)),
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					Forbidden:  false,
+				}
+				require.NoError(t, rbacRepo.SavePermission(context.Background(), permission))
+			},
+			expectedStatus: http.StatusOK,
+			expectConfig:   true,
+		},
+		{
+			name:     "user_without_files_permission",
+			serverID: "1",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user_without_permission",
+					Email: "user_no_perm@example.com",
+					User:  &testUser4,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:            1,
+					UUID:          uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:     "short1",
+					Enabled:       true,
+					Installed:     1,
+					Blocked:       false,
+					Name:          "Test Server 1",
+					GameID:        "cs",
+					DSID:          1,
+					GameModID:     1,
+					ServerIP:      "127.0.0.1",
+					ServerPort:    27015,
+					Dir:           "/home/gameap/servers/test1",
+					ProcessActive: false,
+					CreatedAt:     &now,
+					UpdatedAt:     &now,
+				}
+
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(4, 1)
+			},
+			expectedStatus: http.StatusForbidden,
+			wantError:      "user does not have required permissions",
+			expectConfig:   false,
+		},
+		{
+			name:     "admin_bypasses_files_permission",
+			serverID: "1",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "admin",
+					Email: "admin@example.com",
+					User:  &testUser2,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:            1,
+					UUID:          uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:     "short1",
+					Enabled:       true,
+					Installed:     1,
+					Blocked:       false,
+					Name:          "Test Server 1",
+					GameID:        "cs",
+					DSID:          1,
+					GameModID:     1,
+					ServerIP:      "127.0.0.1",
+					ServerPort:    27015,
+					Dir:           "/home/gameap/servers/test1",
+					ProcessActive: false,
+					CreatedAt:     &now,
+					UpdatedAt:     &now,
+				}
+
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+
+				adminAbility := &domain.Ability{
+					Name: domain.AbilityNameAdminRolesPermissions,
+				}
+				require.NoError(t, rbacRepo.SaveAbility(context.Background(), adminAbility))
+				require.NoError(t, rbacRepo.AssignAbilityToUser(context.Background(), testUser2.ID, adminAbility.ID))
+			},
+			expectedStatus: http.StatusOK,
+			expectConfig:   true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -279,6 +448,7 @@ func TestHandler_NewHandler(t *testing.T) {
 
 	require.NotNil(t, handler)
 	assert.NotNil(t, handler.serverFinder)
+	assert.NotNil(t, handler.abilityChecker)
 	assert.Equal(t, responder, handler.responder)
 }
 

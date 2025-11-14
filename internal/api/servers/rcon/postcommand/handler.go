@@ -22,9 +22,10 @@ import (
 )
 
 type Handler struct {
-	serverFinder *serversbase.ServerFinder
-	gameRepo     repositories.GameRepository
-	responder    base.Responder
+	serverFinder   *serversbase.ServerFinder
+	abilityChecker *serversbase.AbilityChecker
+	gameRepo       repositories.GameRepository
+	responder      base.Responder
 }
 
 func NewHandler(
@@ -34,9 +35,10 @@ func NewHandler(
 	responder base.Responder,
 ) *Handler {
 	return &Handler{
-		serverFinder: serversbase.NewServerFinder(serverRepo, rbac),
-		gameRepo:     gameRepo,
-		responder:    responder,
+		serverFinder:   serversbase.NewServerFinder(serverRepo, rbac),
+		abilityChecker: serversbase.NewAbilityChecker(rbac),
+		gameRepo:       gameRepo,
+		responder:      responder,
 	}
 }
 
@@ -55,6 +57,14 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	server, err := h.getServer(ctx, r, session.User)
 	if err != nil {
+		h.responder.WriteError(ctx, rw, err)
+
+		return
+	}
+
+	if err = h.abilityChecker.CheckOrError(
+		ctx, session.User.ID, server.ID, []domain.AbilityName{domain.AbilityNameGameServerRconConsole},
+	); err != nil {
 		h.responder.WriteError(ctx, rw, err)
 
 		return

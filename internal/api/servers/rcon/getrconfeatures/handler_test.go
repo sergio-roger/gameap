@@ -20,6 +20,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:unparam
+func allowUserAbilityForServer(
+	t *testing.T,
+	repo *inmemory.RBACRepository,
+	userID uint,
+	serverID uint,
+	abilityName domain.AbilityName,
+) {
+	t.Helper()
+
+	ability := domain.CreateAbilityForEntity(abilityName, serverID, domain.EntityTypeServer)
+	require.NoError(t, repo.SaveAbility(context.Background(), &ability))
+
+	require.NoError(t, repo.Allow(
+		context.Background(),
+		userID,
+		domain.EntityTypeUser,
+		[]domain.Ability{ability},
+	))
+}
+
 var testUser1 = domain.User{
 	ID:    1,
 	Login: "testuser",
@@ -45,7 +66,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		expectedPlayersManage bool
 	}{
 		{
-			name:     "successful features retrieval - goldsource engine",
+			name:     "successful_features_retrieval__goldsource_engine",
 			serverID: "1",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -56,7 +77,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 
 				game := &domain.Game{
@@ -86,6 +107,10 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus:        http.StatusOK,
 			expectFeatures:        true,
@@ -93,7 +118,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedPlayersManage: true,
 		},
 		{
-			name:     "successful features retrieval - source engine",
+			name:     "successful_features_retrieval__source_engine",
 			serverID: "2",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -104,7 +129,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 
 				game := &domain.Game{
@@ -134,6 +159,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 2)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 2, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus:        http.StatusOK,
 			expectFeatures:        true,
@@ -141,7 +168,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedPlayersManage: false,
 		},
 		{
-			name:     "successful features retrieval - minecraft engine",
+			name:     "successful_features_retrieval__minecraft_engine",
 			serverID: "3",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -152,7 +179,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 
 				game := &domain.Game{
@@ -182,6 +209,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 3)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 3, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus:        http.StatusOK,
 			expectFeatures:        true,
@@ -189,7 +218,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedPlayersManage: false,
 		},
 		{
-			name:     "successful features retrieval - case insensitive GoldSource",
+			name:     "successful_features_retrieval__case_insensitive_GoldSource",
 			serverID: "4",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -200,7 +229,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, gameRepo *inmemory.GameRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 
 				game := &domain.Game{
@@ -230,6 +259,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 4)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 4, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus:        http.StatusOK,
 			expectFeatures:        true,
@@ -237,7 +268,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedPlayersManage: true,
 		},
 		{
-			name:     "server not found",
+			name:     "server_not_found",
 			serverID: "999",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -254,7 +285,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFeatures: false,
 		},
 		{
-			name:     "user not authenticated",
+			name:     "user_not_authenticated",
 			serverID: "1",
 			//nolint:gocritic
 			setupAuth: func() context.Context {
@@ -266,7 +297,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFeatures: false,
 		},
 		{
-			name:     "invalid server id",
+			name:     "invalid_server_id",
 			serverID: "invalid",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -283,7 +314,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFeatures: false,
 		},
 		{
-			name:     "user does not have access to server",
+			name:     "user_does_not_have_access_to_server",
 			serverID: "5",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -330,7 +361,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFeatures: false,
 		},
 		{
-			name:     "admin can access any server",
+			name:     "admin_can_access_any_server",
 			serverID: "6",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -385,7 +416,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedPlayersManage: false,
 		},
 		{
-			name:     "game not found for server",
+			name:     "game_not_found_for_server",
 			serverID: "7",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -396,7 +427,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
-			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.GameRepository, _ *inmemory.RBACRepository) {
+			setupRepo: func(serverRepo *inmemory.ServerRepository, _ *inmemory.GameRepository, rbacRepo *inmemory.RBACRepository) {
 				now := time.Now()
 
 				server := &domain.Server{
@@ -419,6 +450,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 7)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 7, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusInternalServerError,
 			wantError:      "Internal Server Error",
@@ -491,43 +524,43 @@ func TestNewFeaturesResponse(t *testing.T) {
 		expectedPlayersManage bool
 	}{
 		{
-			name:                  "goldsource engine lowercase",
+			name:                  "goldsource_engine_lowercase",
 			engine:                "goldsource",
 			expectedRcon:          true,
 			expectedPlayersManage: true,
 		},
 		{
-			name:                  "goldsource engine uppercase",
+			name:                  "goldsource_engine_uppercase",
 			engine:                "GoldSource",
 			expectedRcon:          true,
 			expectedPlayersManage: true,
 		},
 		{
-			name:                  "goldsource engine mixed case",
+			name:                  "goldsource_engine_mixed_case",
 			engine:                "GOLDSOURCE",
 			expectedRcon:          true,
 			expectedPlayersManage: true,
 		},
 		{
-			name:                  "source engine",
+			name:                  "source_engine",
 			engine:                "source",
 			expectedRcon:          true,
 			expectedPlayersManage: false,
 		},
 		{
-			name:                  "minecraft engine",
+			name:                  "minecraft_engine",
 			engine:                "minecraft",
 			expectedRcon:          true,
 			expectedPlayersManage: false,
 		},
 		{
-			name:                  "unknown engine",
+			name:                  "unknown_engine",
 			engine:                "unknown",
 			expectedRcon:          true,
 			expectedPlayersManage: false,
 		},
 		{
-			name:                  "empty engine",
+			name:                  "empty_engine",
 			engine:                "",
 			expectedRcon:          true,
 			expectedPlayersManage: false,
@@ -550,22 +583,22 @@ func TestIsGoldSourceEngine(t *testing.T) {
 		want   bool
 	}{
 		{
-			name:   "goldsource lowercase",
+			name:   "goldsource_lowercase",
 			engine: "goldsource",
 			want:   true,
 		},
 		{
-			name:   "goldsource uppercase",
+			name:   "goldsource_uppercase",
 			engine: "GOLDSOURCE",
 			want:   true,
 		},
 		{
-			name:   "goldsource mixed case",
+			name:   "goldsource_mixed_case",
 			engine: "GoldSource",
 			want:   true,
 		},
 		{
-			name:   "source engine",
+			name:   "source_engine",
 			engine: "source",
 			want:   false,
 		},
@@ -575,12 +608,12 @@ func TestIsGoldSourceEngine(t *testing.T) {
 			want:   false,
 		},
 		{
-			name:   "empty string",
+			name:   "empty_string",
 			engine: "",
 			want:   false,
 		},
 		{
-			name:   "partial match",
+			name:   "partial_match",
 			engine: "gold",
 			want:   false,
 		},

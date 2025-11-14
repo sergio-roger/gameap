@@ -141,6 +141,204 @@ func TestGetServerSettings(t *testing.T) {
 			roles:          []domain.Role{},
 			expectedStatus: http.StatusForbidden,
 		},
+		{
+			name:     "admin_user_bypasses_server_permissions",
+			serverID: 1,
+			userID:   1,
+			gameMod: &domain.GameMod{
+				ID:       1,
+				GameCode: "valve",
+				Name:     "Half-Life Deathmatch",
+				Vars:     domain.GameModVarList{},
+			},
+			abilities: []domain.Ability{
+				{
+					ID:   1,
+					Name: domain.AbilityNameAdminRolesPermissions,
+				},
+			},
+			permissions: []domain.Permission{
+				{
+					ID:         1,
+					AbilityID:  1,
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+			},
+			roles:          []domain.Role{},
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:     "user_with_only_common_permission",
+			serverID: 1,
+			userID:   1,
+			abilities: []domain.Ability{
+				{
+					ID:         1,
+					Name:       domain.AbilityNameGameServerCommon,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				},
+			},
+			permissions: []domain.Permission{
+				{
+					ID:         1,
+					AbilityID:  1,
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+			},
+			roles:          []domain.Role{},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:     "user_with_only_settings_permission",
+			serverID: 1,
+			userID:   1,
+			abilities: []domain.Ability{
+				{
+					ID:         1,
+					Name:       domain.AbilityNameGameServerSettings,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				},
+			},
+			permissions: []domain.Permission{
+				{
+					ID:         1,
+					AbilityID:  1,
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+			},
+			roles:          []domain.Role{},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:     "forbidden_permission_overrides_allowed",
+			serverID: 1,
+			userID:   1,
+			abilities: []domain.Ability{
+				{
+					ID:         1,
+					Name:       domain.AbilityNameGameServerCommon,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				},
+				{
+					ID:         2,
+					Name:       domain.AbilityNameGameServerSettings,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				},
+			},
+			permissions: []domain.Permission{
+				{
+					ID:         1,
+					AbilityID:  1,
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+				{
+					ID:         2,
+					AbilityID:  2,
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  true,
+				},
+			},
+			roles:          []domain.Role{},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:     "user_with_permissions_for_different_server",
+			serverID: 1,
+			userID:   1,
+			abilities: []domain.Ability{
+				{
+					ID:         1,
+					Name:       domain.AbilityNameGameServerCommon,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(2)),
+				},
+				{
+					ID:         2,
+					Name:       domain.AbilityNameGameServerSettings,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(2)),
+				},
+			},
+			permissions: []domain.Permission{
+				{
+					ID:         1,
+					AbilityID:  1,
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+				{
+					ID:         2,
+					AbilityID:  2,
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+			},
+			roles:          []domain.Role{},
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:     "user_with_role_based_permissions",
+			serverID: 1,
+			userID:   1,
+			gameMod: &domain.GameMod{
+				ID:       1,
+				GameCode: "valve",
+				Name:     "Half-Life Deathmatch",
+				Vars:     domain.GameModVarList{},
+			},
+			abilities: []domain.Ability{
+				{
+					ID:         1,
+					Name:       domain.AbilityNameGameServerCommon,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				},
+				{
+					ID:         2,
+					Name:       domain.AbilityNameGameServerSettings,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				},
+			},
+			permissions: []domain.Permission{
+				{
+					ID:         1,
+					AbilityID:  1,
+					EntityType: lo.ToPtr(domain.EntityTypeRole),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+				{
+					ID:         2,
+					AbilityID:  2,
+					EntityType: lo.ToPtr(domain.EntityTypeRole),
+					EntityID:   lo.ToPtr(uint(1)),
+					Forbidden:  false,
+				},
+			},
+			roles: []domain.Role{
+				{
+					ID:   1,
+					Name: "server_admin",
+				},
+			},
+			expectedStatus: http.StatusOK,
+		},
 	}
 
 	for _, test := range tests {
@@ -216,6 +414,16 @@ func TestGetServerSettings(t *testing.T) {
 			for _, role := range test.roles {
 				err := rbacRepo.SaveRole(ctx, &role)
 				require.NoError(t, err)
+
+				if test.userID > 0 {
+					err = rbacRepo.AssignRolesForEntity(
+						ctx,
+						test.userID,
+						domain.EntityTypeUser,
+						[]domain.RestrictedRole{domain.NewRestrictedRoleFromRole(role)},
+					)
+					require.NoError(t, err)
+				}
 			}
 
 			rbacService := rbac.NewRBAC(services.NewNilTransactionManager(), rbacRepo, 0)

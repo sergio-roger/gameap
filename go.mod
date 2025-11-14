@@ -25,6 +25,7 @@ require (
 	github.com/rumblefrog/go-a2s v1.0.2
 	github.com/samber/lo v1.51.0
 	github.com/stretchr/testify v1.11.1
+	go.uber.org/mock v0.6.0
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.42.0
 	golang.org/x/text v0.29.0

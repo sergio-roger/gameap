@@ -30,16 +30,13 @@ func Run(runParams RunParams) {
 	}
 
 	if err := loadLegacyEnv(runParams.LegacyEnvFile); err != nil {
+		// Log the error but continue execution
 		slog.Error("Failed to load legacy env file", slog.String("error", err.Error()))
-
-		os.Exit(1)
-
-		return
 	}
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error("Failed to load config", slog.String("error", err.Error()))
 
 		os.Exit(1)
 

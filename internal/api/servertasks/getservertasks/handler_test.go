@@ -267,8 +267,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				_ = serverRepo.Save(context.Background(), server)
 			},
 			queryParams:    "1",
-			expectedStatus: http.StatusForbidden,
-			wantError:      "access to server denied",
+			expectedStatus: http.StatusNotFound,
+			wantError:      "server not found",
 		},
 		{
 			name: "empty tasks list for valid server",
@@ -333,6 +333,238 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			queryParams:    "1",
 			expectedStatus: http.StatusOK,
 			expectedTasks:  0,
+		},
+		{
+			name: "user_without_tasks_permission",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user",
+					Email: "user@example.com",
+					User: &domain.User{
+						ID:    5,
+						Login: "user",
+						Email: "user@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(_ *inmemory.ServerTaskRepository, serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				_ = serverRepo.Save(context.Background(), server)
+				serverRepo.AddUserServer(5, 1)
+			},
+			queryParams:    "1",
+			expectedStatus: http.StatusForbidden,
+			wantError:      "user does not have required permissions",
+		},
+		{
+			name: "user_with_forbidden_tasks_permission",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user",
+					Email: "user@example.com",
+					User: &domain.User{
+						ID:    6,
+						Login: "user",
+						Email: "user@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(_ *inmemory.ServerTaskRepository, serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				_ = serverRepo.Save(context.Background(), server)
+				serverRepo.AddUserServer(6, 1)
+
+				ability := &domain.Ability{
+					Name:       domain.AbilityNameGameServerTasks,
+					Title:      lo.ToPtr("Server Tasks"),
+					EntityID:   lo.ToPtr(uint(1)),
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+				}
+				_ = rbacRepo.SaveAbility(context.Background(), ability)
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(uint(6)),
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					Forbidden:  true,
+				}
+				_ = rbacRepo.SavePermission(context.Background(), permission)
+			},
+			queryParams:    "1",
+			expectedStatus: http.StatusForbidden,
+			wantError:      "user does not have required permissions",
+		},
+		{
+			name: "user_with_role_based_permissions",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user",
+					Email: "user@example.com",
+					User: &domain.User{
+						ID:    7,
+						Login: "user",
+						Email: "user@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(taskRepo *inmemory.ServerTaskRepository, serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+				executeDate := now.Add(time.Hour)
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				_ = serverRepo.Save(context.Background(), server)
+				serverRepo.AddUserServer(7, 1)
+
+				task := &domain.ServerTask{
+					Command:      "restart",
+					ServerID:     1,
+					Repeat:       0,
+					RepeatPeriod: 0,
+					Counter:      0,
+					ExecuteDate:  executeDate,
+					CreatedAt:    &now,
+					UpdatedAt:    &now,
+				}
+				_ = taskRepo.Save(context.Background(), task)
+
+				serverRole := &domain.Role{
+					Name:  "server_manager",
+					Title: lo.ToPtr("Server Manager"),
+				}
+				_ = rbacRepo.SaveRole(context.Background(), serverRole)
+
+				_ = rbacRepo.AssignRolesForEntity(
+					context.Background(),
+					7,
+					domain.EntityTypeUser,
+					[]domain.RestrictedRole{domain.NewRestrictedRoleFromRole(*serverRole)},
+				)
+
+				ability := &domain.Ability{
+					Name:       domain.AbilityNameGameServerTasks,
+					Title:      lo.ToPtr("Server Tasks"),
+					EntityID:   lo.ToPtr(uint(1)),
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+				}
+				_ = rbacRepo.SaveAbility(context.Background(), ability)
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(serverRole.ID),
+					EntityType: lo.ToPtr(domain.EntityTypeRole),
+					Forbidden:  false,
+				}
+				_ = rbacRepo.SavePermission(context.Background(), permission)
+			},
+			queryParams:    "1",
+			expectedStatus: http.StatusOK,
+			expectedTasks:  1,
+		},
+		{
+			name: "admin_bypasses_server_permissions",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "admin",
+					Email: "admin@example.com",
+					User: &domain.User{
+						ID:    8,
+						Login: "admin",
+						Email: "admin@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(taskRepo *inmemory.ServerTaskRepository, serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
+				now := time.Now()
+				executeDate := now.Add(time.Hour)
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				_ = serverRepo.Save(context.Background(), server)
+
+				task := &domain.ServerTask{
+					Command:      "restart",
+					ServerID:     1,
+					Repeat:       0,
+					RepeatPeriod: 0,
+					Counter:      0,
+					ExecuteDate:  executeDate,
+					CreatedAt:    &now,
+					UpdatedAt:    &now,
+				}
+				_ = taskRepo.Save(context.Background(), task)
+
+				ability := &domain.Ability{
+					Name:  domain.AbilityNameAdminRolesPermissions,
+					Title: lo.ToPtr("Admin Permissions"),
+				}
+				_ = rbacRepo.SaveAbility(context.Background(), ability)
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(uint(8)),
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					Forbidden:  false,
+				}
+				_ = rbacRepo.SavePermission(context.Background(), permission)
+			},
+			queryParams:    "1",
+			expectedStatus: http.StatusOK,
+			expectedTasks:  1,
 		},
 	}
 
@@ -449,180 +681,4 @@ func TestHandler_ServerTasksResponseConversion(t *testing.T) {
 	assert.Nil(t, response[1].Payload)
 	assert.Equal(t, &now, response[1].CreatedAt)
 	assert.Equal(t, &now, response[1].UpdatedAt)
-}
-
-func TestHandler_HasServerAccess(t *testing.T) {
-	tests := []struct {
-		name       string
-		setupRepos func(*inmemory.ServerRepository, *inmemory.RBACRepository)
-		user       *domain.User
-		serverID   uint
-		wantAccess bool
-		wantError  bool
-	}{
-		{
-			name: "admin has access",
-			setupRepos: func(_ *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
-				adminRole := &domain.Role{
-					Name:  "admin",
-					Title: lo.ToPtr("Administrator"),
-					Level: lo.ToPtr(uint(100)),
-				}
-				_ = rbacRepo.SaveRole(context.Background(), adminRole)
-
-				assignedRole := &domain.AssignedRole{
-					RoleID:     adminRole.ID,
-					EntityID:   1,
-					EntityType: domain.EntityTypeUser,
-				}
-				_ = rbacRepo.SaveAssignedRole(context.Background(), assignedRole)
-
-				ability := &domain.Ability{
-					Name:  domain.AbilityNameAdminRolesPermissions,
-					Title: lo.ToPtr("Admin Permissions"),
-				}
-				_ = rbacRepo.SaveAbility(context.Background(), ability)
-
-				permission := &domain.Permission{
-					AbilityID:  ability.ID,
-					EntityID:   lo.ToPtr(uint(1)),
-					EntityType: lo.ToPtr(domain.EntityTypeUser),
-					Forbidden:  false,
-				}
-				_ = rbacRepo.SavePermission(context.Background(), permission)
-			},
-			user: &domain.User{
-				ID:    1,
-				Login: "admin",
-				Email: "admin@example.com",
-			},
-			serverID:   1,
-			wantAccess: true,
-			wantError:  false,
-		},
-		{
-			name: "user with server access and task permission",
-			setupRepos: func(serverRepo *inmemory.ServerRepository, rbacRepo *inmemory.RBACRepository) {
-				now := time.Now()
-				server := &domain.Server{
-					ID:         1,
-					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
-					UUIDShort:  "short1",
-					Name:       "Test Server",
-					GameID:     "cs",
-					ServerIP:   "127.0.0.1",
-					ServerPort: 27015,
-					Dir:        "/home/gameap/servers/test1",
-					CreatedAt:  &now,
-					UpdatedAt:  &now,
-				}
-				_ = serverRepo.Save(context.Background(), server)
-				serverRepo.AddUserServer(2, 1)
-
-				ability := &domain.Ability{
-					Name:       domain.AbilityNameGameServerTasks,
-					Title:      lo.ToPtr("Server Tasks"),
-					EntityID:   lo.ToPtr(uint(1)),
-					EntityType: lo.ToPtr(domain.EntityTypeServer),
-				}
-				_ = rbacRepo.SaveAbility(context.Background(), ability)
-
-				permission := &domain.Permission{
-					AbilityID:  ability.ID,
-					EntityID:   lo.ToPtr(uint(2)),
-					EntityType: lo.ToPtr(domain.EntityTypeUser),
-					Forbidden:  false,
-				}
-				_ = rbacRepo.SavePermission(context.Background(), permission)
-			},
-			user: &domain.User{
-				ID:    2,
-				Login: "user",
-				Email: "user@example.com",
-			},
-			serverID:   1,
-			wantAccess: true,
-			wantError:  false,
-		},
-		{
-			name: "user with server access but no task permission",
-			setupRepos: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
-				now := time.Now()
-				server := &domain.Server{
-					ID:         1,
-					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
-					UUIDShort:  "short1",
-					Name:       "Test Server",
-					GameID:     "cs",
-					ServerIP:   "127.0.0.1",
-					ServerPort: 27015,
-					Dir:        "/home/gameap/servers/test1",
-					CreatedAt:  &now,
-					UpdatedAt:  &now,
-				}
-				_ = serverRepo.Save(context.Background(), server)
-				serverRepo.AddUserServer(3, 1)
-			},
-			user: &domain.User{
-				ID:    3,
-				Login: "user",
-				Email: "user@example.com",
-			},
-			serverID:   1,
-			wantAccess: false,
-			wantError:  false,
-		},
-		{
-			name: "user without server access",
-			setupRepos: func(serverRepo *inmemory.ServerRepository, _ *inmemory.RBACRepository) {
-				now := time.Now()
-				server := &domain.Server{
-					ID:         1,
-					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
-					UUIDShort:  "short1",
-					Name:       "Test Server",
-					GameID:     "cs",
-					ServerIP:   "127.0.0.1",
-					ServerPort: 27015,
-					Dir:        "/home/gameap/servers/test1",
-					CreatedAt:  &now,
-					UpdatedAt:  &now,
-				}
-				_ = serverRepo.Save(context.Background(), server)
-			},
-			user: &domain.User{
-				ID:    4,
-				Login: "user",
-				Email: "user@example.com",
-			},
-			serverID:   1,
-			wantAccess: false,
-			wantError:  false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			serversRepo := inmemory.NewServerRepository()
-			serverTasksRepo := inmemory.NewServerTaskRepository(serversRepo)
-			rbacRepo := inmemory.NewRBACRepository()
-			rbacService := rbac.NewRBAC(services.NewNilTransactionManager(), rbacRepo, 0)
-			responder := api.NewResponder()
-
-			handler := NewHandler(serverTasksRepo, serversRepo, rbacService, responder)
-
-			if tt.setupRepos != nil {
-				tt.setupRepos(serversRepo, rbacRepo)
-			}
-
-			hasAccess, err := handler.hasServerAccess(context.Background(), tt.user, tt.serverID)
-
-			if tt.wantError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantAccess, hasAccess)
-			}
-		})
-	}
 }

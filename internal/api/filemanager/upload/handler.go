@@ -48,10 +48,11 @@ type fileService interface {
 }
 
 type Handler struct {
-	serverFinder *serversbase.ServerFinder
-	nodeRepo     repositories.NodeRepository
-	daemonFiles  fileService
-	responder    base.Responder
+	serverFinder   *serversbase.ServerFinder
+	abilityChecker *serversbase.AbilityChecker
+	nodeRepo       repositories.NodeRepository
+	daemonFiles    fileService
+	responder      base.Responder
 }
 
 func NewHandler(
@@ -62,13 +63,15 @@ func NewHandler(
 	responder base.Responder,
 ) *Handler {
 	return &Handler{
-		serverFinder: serversbase.NewServerFinder(serverRepo, rbac),
-		nodeRepo:     nodeRepo,
-		daemonFiles:  daemonFiles,
-		responder:    responder,
+		serverFinder:   serversbase.NewServerFinder(serverRepo, rbac),
+		abilityChecker: serversbase.NewAbilityChecker(rbac),
+		nodeRepo:       nodeRepo,
+		daemonFiles:    daemonFiles,
+		responder:      responder,
 	}
 }
 
+//nolint:funlen
 func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -93,6 +96,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	server, err := h.serverFinder.FindUserServer(ctx, session.User, serverID)
+	if err != nil {
+		h.responder.WriteError(ctx, rw, err)
+
+		return
+	}
+
+	err = h.abilityChecker.CheckOrError(
+		ctx,
+		session.User.ID,
+		server.ID,
+		[]domain.AbilityName{domain.AbilityNameGameServerFiles},
+	)
 	if err != nil {
 		h.responder.WriteError(ctx, rw, err)
 

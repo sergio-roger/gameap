@@ -1,10 +1,10 @@
 package getservertasks
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gameap/gameap/internal/api/base"
+	serversbase "github.com/gameap/gameap/internal/api/servers/base"
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/filters"
 	"github.com/gameap/gameap/internal/repositories"
@@ -15,8 +15,8 @@ import (
 
 type Handler struct {
 	serverTasksRepo repositories.ServerTaskRepository
-	serversRepo     repositories.ServerRepository
-	rbac            base.RBAC
+	serverFinder    *serversbase.ServerFinder
+	abilityChecker  *serversbase.AbilityChecker
 	responder       base.Responder
 }
 
@@ -28,8 +28,8 @@ func NewHandler(
 ) *Handler {
 	return &Handler{
 		serverTasksRepo: serverTasksRepo,
-		serversRepo:     serversRepo,
-		rbac:            rbac,
+		serverFinder:    serversbase.NewServerFinder(serversRepo, rbac),
+		abilityChecker:  serversbase.NewAbilityChecker(rbac),
 		responder:       responder,
 	}
 }
@@ -59,15 +59,21 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hasAccess, err := h.hasServerAccess(ctx, session.User, serverID)
+	server, err := h.serverFinder.FindUserServer(ctx, session.User, serverID)
 	if err != nil {
-		h.responder.WriteError(ctx, rw, errors.WithMessage(err, "failed to check server access"))
+		h.responder.WriteError(ctx, rw, err)
+
+		return
 	}
-	if !hasAccess {
-		h.responder.WriteError(ctx, rw, api.WrapHTTPError(
-			errors.New("access to server denied"),
-			http.StatusForbidden,
-		))
+
+	err = h.abilityChecker.CheckOrError(
+		ctx,
+		session.User.ID,
+		server.ID,
+		[]domain.AbilityName{domain.AbilityNameGameServerTasks},
+	)
+	if err != nil {
+		h.responder.WriteError(ctx, rw, err)
 
 		return
 	}
@@ -89,39 +95,4 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	taskResponses := newServerTasksResponseFromServerTasks(serverTasks)
 
 	h.responder.Write(ctx, rw, taskResponses)
-}
-
-func (h *Handler) hasServerAccess(ctx context.Context, user *domain.User, serverID uint) (bool, error) {
-	isAdmin, err := h.rbac.Can(
-		ctx, user.ID, []domain.AbilityName{domain.AbilityNameAdminRolesPermissions},
-	)
-	if err != nil {
-		return false, errors.WithMessage(err, "failed to check user permissions")
-	}
-
-	if isAdmin {
-		return true, nil
-	}
-
-	servers, err := h.serversRepo.FindUserServers(ctx, user.ID, filters.FindServerByIDs(serverID), nil, nil)
-	if err != nil {
-		return false, errors.WithMessage(err, "failed to check server access")
-	}
-
-	if len(servers) == 0 {
-		return false, nil
-	}
-
-	canControlTasks, err := h.rbac.CanForEntity(
-		ctx,
-		user.ID,
-		domain.EntityTypeServer,
-		serverID,
-		[]domain.AbilityName{domain.AbilityNameGameServerTasks},
-	)
-	if err != nil {
-		return false, errors.WithMessage(err, "failed to check user permissions")
-	}
-
-	return canControlTasks, nil
 }

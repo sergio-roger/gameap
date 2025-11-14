@@ -17,9 +17,30 @@ import (
 	"github.com/gameap/gameap/pkg/auth"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+//nolint:unparam
+func allowUserFilesAbility(t *testing.T, rbacRepo *inmemory.RBACRepository, userID, serverID uint) {
+	t.Helper()
+
+	ability := &domain.Ability{
+		Name:       domain.AbilityNameGameServerFiles,
+		EntityType: lo.ToPtr(domain.EntityTypeServer),
+		EntityID:   lo.ToPtr(serverID),
+	}
+	require.NoError(t, rbacRepo.SaveAbility(context.Background(), ability))
+
+	permission := &domain.Permission{
+		AbilityID:  ability.ID,
+		EntityID:   lo.ToPtr(userID),
+		EntityType: lo.ToPtr(domain.EntityTypeUser),
+		Forbidden:  false,
+	}
+	require.NoError(t, rbacRepo.SavePermission(context.Background(), permission))
+}
 
 var testUser1 = domain.User{
 	ID:    1,
@@ -115,7 +136,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				nodeRepo *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -140,6 +161,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 
 				node := testNode
 				require.NoError(t, nodeRepo.Save(context.Background(), &node))
@@ -189,7 +211,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				nodeRepo *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -214,6 +236,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 
 				node := testNode
 				require.NoError(t, nodeRepo.Save(context.Background(), &node))
@@ -263,7 +286,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				nodeRepo *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -288,6 +311,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 
 				node := testNode
 				require.NoError(t, nodeRepo.Save(context.Background(), &node))
@@ -362,7 +386,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				nodeRepo *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -387,6 +411,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 
 				node := testNode
 				require.NoError(t, nodeRepo.Save(context.Background(), &node))
@@ -435,7 +460,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -460,6 +485,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 			},
 			setupFileService: func() *mockFileService {
 				return &mockFileService{}
@@ -492,7 +518,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -517,6 +543,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 			},
 			setupFileService: func() *mockFileService {
 				return &mockFileService{}
@@ -549,7 +576,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -574,6 +601,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 			},
 			setupFileService: func() *mockFileService {
 				return &mockFileService{}
@@ -606,7 +634,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -631,6 +659,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 			},
 			setupFileService: func() *mockFileService {
 				return &mockFileService{}
@@ -885,7 +914,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				nodeRepo *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -910,6 +939,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 
 				node := testNode
 				require.NoError(t, nodeRepo.Save(context.Background(), &node))
@@ -945,7 +975,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				nodeRepo *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -970,6 +1000,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 
 				node := testNode
 				require.NoError(t, nodeRepo.Save(context.Background(), &node))
@@ -1005,7 +1036,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				nodeRepo *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -1030,6 +1061,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
 
 				node := testNode
 				require.NoError(t, nodeRepo.Save(context.Background(), &node))
@@ -1042,6 +1074,113 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		},
 		{
 			name:     "node_not_found",
+			serverID: "1",
+			requestBody: pasteRequest{
+				Disk: "server",
+				Path: "new",
+				Clipboard: clipboard{
+					Type:        "copy",
+					Disk:        "server",
+					Directories: []string{},
+					Files:       []string{"test.txt"},
+				},
+			},
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "testuser",
+					Email: "test@example.com",
+					User:  &testUser1,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(
+				serverRepo *inmemory.ServerRepository,
+				_ *inmemory.NodeRepository,
+				rbacRepo *inmemory.RBACRepository,
+			) {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:            1,
+					UUID:          uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:     "short1",
+					Enabled:       true,
+					Installed:     1,
+					Blocked:       false,
+					Name:          "Test Server 1",
+					GameID:        "cs",
+					DSID:          999,
+					GameModID:     1,
+					ServerIP:      "127.0.0.1",
+					ServerPort:    27015,
+					Dir:           "/home/gameap/servers/test1",
+					ProcessActive: false,
+					CreatedAt:     &now,
+					UpdatedAt:     &now,
+				}
+
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
+			},
+			setupFileService: func() *mockFileService {
+				return &mockFileService{}
+			},
+			expectedStatus: http.StatusNotFound,
+			wantError:      "node not found",
+		},
+		{
+			name:        "invalid_request_body",
+			serverID:    "1",
+			requestBody: "invalid json",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "testuser",
+					Email: "test@example.com",
+					User:  &testUser1,
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepo: func(
+				serverRepo *inmemory.ServerRepository,
+				_ *inmemory.NodeRepository,
+				rbacRepo *inmemory.RBACRepository,
+			) {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:            1,
+					UUID:          uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:     "short1",
+					Enabled:       true,
+					Installed:     1,
+					Blocked:       false,
+					Name:          "Test Server 1",
+					GameID:        "cs",
+					DSID:          1,
+					GameModID:     1,
+					ServerIP:      "127.0.0.1",
+					ServerPort:    27015,
+					Dir:           "/home/gameap/servers/test1",
+					ProcessActive: false,
+					CreatedAt:     &now,
+					UpdatedAt:     &now,
+				}
+
+				require.NoError(t, serverRepo.Save(context.Background(), server))
+				serverRepo.AddUserServer(1, 1)
+				allowUserFilesAbility(t, rbacRepo, 1, 1)
+			},
+			setupFileService: func() *mockFileService {
+				return &mockFileService{}
+			},
+			expectedStatus: http.StatusBadRequest,
+			wantError:      "invalid request body",
+		},
+		{
+			name:     "user_without_files_permission",
 			serverID: "1",
 			requestBody: pasteRequest{
 				Disk: "server",
@@ -1078,7 +1217,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					Blocked:       false,
 					Name:          "Test Server 1",
 					GameID:        "cs",
-					DSID:          999,
+					DSID:          1,
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
@@ -1094,26 +1233,35 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupFileService: func() *mockFileService {
 				return &mockFileService{}
 			},
-			expectedStatus: http.StatusNotFound,
-			wantError:      "node not found",
+			expectedStatus: http.StatusForbidden,
+			wantError:      "user does not have required permissions",
 		},
 		{
-			name:        "invalid_request_body",
-			serverID:    "1",
-			requestBody: "invalid json",
+			name:     "admin_bypasses_files_permission",
+			serverID: "1",
+			requestBody: pasteRequest{
+				Disk: "server",
+				Path: "new",
+				Clipboard: clipboard{
+					Type:        "copy",
+					Disk:        "server",
+					Directories: []string{},
+					Files:       []string{"test.txt"},
+				},
+			},
 			setupAuth: func() context.Context {
 				session := &auth.Session{
-					Login: "testuser",
-					Email: "test@example.com",
-					User:  &testUser1,
+					Login: "admin",
+					Email: "admin@example.com",
+					User:  &testUser2,
 				}
 
 				return auth.ContextWithSession(context.Background(), session)
 			},
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
-				_ *inmemory.NodeRepository,
-				_ *inmemory.RBACRepository,
+				nodeRepo *inmemory.NodeRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -1137,13 +1285,31 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				}
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
-				serverRepo.AddUserServer(1, 1)
+
+				node := testNode
+				require.NoError(t, nodeRepo.Save(context.Background(), &node))
+
+				adminAbility := &domain.Ability{
+					Name: domain.AbilityNameAdminRolesPermissions,
+				}
+				require.NoError(t, rbacRepo.SaveAbility(context.Background(), adminAbility))
+				require.NoError(t, rbacRepo.AssignAbilityToUser(context.Background(), testUser2.ID, adminAbility.ID))
 			},
 			setupFileService: func() *mockFileService {
-				return &mockFileService{}
+				return &mockFileService{
+					copyFunc: func(_ context.Context, _ *domain.Node, _ string, _ string) error {
+						return nil
+					},
+				}
 			},
-			expectedStatus: http.StatusBadRequest,
-			wantError:      "invalid request body",
+			expectedStatus: http.StatusOK,
+			validateResponse: func(t *testing.T, body []byte) {
+				t.Helper()
+
+				var response pasteResponse
+				require.NoError(t, json.Unmarshal(body, &response))
+				assert.Equal(t, "success", response.Result.Status)
+			},
 		},
 	}
 

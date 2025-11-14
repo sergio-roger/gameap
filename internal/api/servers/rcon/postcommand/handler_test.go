@@ -21,6 +21,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:unparam
+func allowUserAbilityForServer(
+	t *testing.T,
+	repo *inmemory.RBACRepository,
+	userID uint,
+	serverID uint,
+	abilityName domain.AbilityName,
+) {
+	t.Helper()
+
+	ability := domain.CreateAbilityForEntity(abilityName, serverID, domain.EntityTypeServer)
+	require.NoError(t, repo.SaveAbility(context.Background(), &ability))
+
+	require.NoError(t, repo.Allow(
+		context.Background(),
+		userID,
+		domain.EntityTypeUser,
+		[]domain.Ability{ability},
+	))
+}
+
 const testRconPassword = "test_password"
 
 var testUser1 = domain.User{
@@ -131,7 +152,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.GameRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -155,6 +176,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusServiceUnavailable,
 			wantError:      "Service Unavailable",
@@ -178,7 +201,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.GameRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 				lastCheck := time.Now()
@@ -204,6 +227,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusBadRequest,
 			wantError:      "command is required",
@@ -227,7 +252,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.GameRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 				lastCheck := time.Now()
@@ -253,6 +278,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusBadRequest,
 			wantError:      "command is required",
@@ -276,7 +303,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.GameRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 				lastCheck := time.Now()
@@ -302,6 +329,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusBadRequest,
 			wantError:      "command must not exceed 127 characters",
@@ -325,7 +354,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.GameRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 				lastCheck := time.Now()
@@ -353,6 +382,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusInternalServerError,
 			wantError:      "Internal Server Error",
@@ -376,7 +407,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				gameRepo *inmemory.GameRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 				lastCheck := time.Now()
@@ -409,6 +440,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconConsole)
 				require.NoError(t, gameRepo.Save(context.Background(), game))
 			},
 			expectedStatus: http.StatusPreconditionFailed,

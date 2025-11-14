@@ -20,6 +20,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+//nolint:unparam
+func allowUserAbilityForServer(
+	t *testing.T,
+	repo *inmemory.RBACRepository,
+	userID uint,
+	serverID uint,
+	abilityName domain.AbilityName,
+) {
+	t.Helper()
+
+	ability := domain.CreateAbilityForEntity(abilityName, serverID, domain.EntityTypeServer)
+	require.NoError(t, repo.SaveAbility(context.Background(), &ability))
+
+	require.NoError(t, repo.Allow(
+		context.Background(),
+		userID,
+		domain.EntityTypeUser,
+		[]domain.Ability{ability},
+	))
+}
+
 var testUser1 = domain.User{
 	ID:    1,
 	Login: "testuser",
@@ -43,7 +64,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		expectFastRcon bool
 	}{
 		{
-			name:     "successful fast rcon retrieval",
+			name:     "successful_fast_rcon_retrieval",
 			serverID: "1",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -57,7 +78,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				gameModRepo *inmemory.GameModRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -93,12 +114,14 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
 				require.NoError(t, gameModRepo.Save(context.Background(), gameMod))
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusOK,
 			expectFastRcon: true,
 		},
 		{
-			name:     "empty fast rcon list",
+			name:     "empty_fast_rcon_list",
 			serverID: "1",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -112,7 +135,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				gameModRepo *inmemory.GameModRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -145,12 +168,14 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
 				require.NoError(t, gameModRepo.Save(context.Background(), gameMod))
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusOK,
 			expectFastRcon: true,
 		},
 		{
-			name:     "server not found",
+			name:     "server_not_found",
 			serverID: "999",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -172,7 +197,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFastRcon: false,
 		},
 		{
-			name:     "user not authenticated",
+			name:     "user_not_authenticated",
 			serverID: "1",
 			//nolint:gocritic
 			setupAuth: func() context.Context {
@@ -189,7 +214,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFastRcon: false,
 		},
 		{
-			name:     "invalid server id",
+			name:     "invalid_server_id",
 			serverID: "invalid",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -211,7 +236,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFastRcon: false,
 		},
 		{
-			name:     "game mod not found",
+			name:     "game_mod_not_found",
 			serverID: "1",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -225,7 +250,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupRepo: func(
 				serverRepo *inmemory.ServerRepository,
 				_ *inmemory.GameModRepository,
-				_ *inmemory.RBACRepository,
+				rbacRepo *inmemory.RBACRepository,
 			) {
 				now := time.Now()
 
@@ -250,13 +275,15 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				require.NoError(t, serverRepo.Save(context.Background(), server))
 				serverRepo.AddUserServer(1, 1)
+
+				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerRconConsole)
 			},
 			expectedStatus: http.StatusNotFound,
 			wantError:      "game mod for server not found",
 			expectFastRcon: false,
 		},
 		{
-			name:     "user does not have access to server",
+			name:     "user_does_not_have_access_to_server",
 			serverID: "2",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -311,7 +338,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectFastRcon: false,
 		},
 		{
-			name:     "admin can access any server",
+			name:     "admin_can_access_any_server",
 			serverID: "2",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -460,6 +487,8 @@ func TestHandler_FastRconContent(t *testing.T) {
 	serverRepo.AddUserServer(1, 1)
 	require.NoError(t, gameModRepo.Save(context.Background(), gameMod))
 
+	allowUserAbilityForServer(t, rbacRepo, testUser1.ID, server.ID, domain.AbilityNameGameServerRconConsole)
+
 	session := &auth.Session{
 		Login: "testuser",
 		Email: "test@example.com",
@@ -512,7 +541,7 @@ func TestNewFastRconResponse(t *testing.T) {
 		want     int
 	}{
 		{
-			name: "multiple items",
+			name: "multiple_items",
 			fastRcon: domain.GameModFastRconList{
 				{Info: "Status", Command: "status"},
 				{Info: "Restart", Command: "restart"},
@@ -520,12 +549,12 @@ func TestNewFastRconResponse(t *testing.T) {
 			want: 2,
 		},
 		{
-			name:     "empty list",
+			name:     "empty_list",
 			fastRcon: domain.GameModFastRconList{},
 			want:     0,
 		},
 		{
-			name:     "nil list",
+			name:     "nil_list",
 			fastRcon: nil,
 			want:     0,
 		},

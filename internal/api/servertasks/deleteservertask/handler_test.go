@@ -116,6 +116,7 @@ var defaultSetupRepos = func(
 	return nil
 }
 
+//nolint:gocyclo // Table-driven tests naturally have high cyclomatic complexity
 func TestHandler_ServeHTTP(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -197,8 +198,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 				return nil
 			},
-			wantStatus: http.StatusForbidden,
-			wantError:  "access to server denied",
+			wantStatus: http.StatusNotFound,
+			wantError:  "server not found",
 		},
 		{
 			name:       "task not found",
@@ -312,6 +313,403 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			},
 			wantStatus: http.StatusNotFound,
 			wantError:  "server task not found",
+		},
+		{
+			name: "user_with_server_tasks_permission",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user",
+					Email: "user@example.com",
+					User: &domain.User{
+						ID:    2,
+						Login: "user",
+						Email: "user@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(
+				taskRepo *inmemory.ServerTaskRepository,
+				serverRepo *inmemory.ServerRepository,
+				rbacRepo *inmemory.RBACRepository,
+			) error {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				err := serverRepo.Save(context.Background(), server)
+				if err != nil {
+					return err
+				}
+
+				serverRepo.AddUserServer(2, 1)
+
+				task := &domain.ServerTask{
+					ID:          1,
+					Command:     "restart",
+					ServerID:    1,
+					Repeat:      1,
+					ExecuteDate: time.Now().Add(time.Hour),
+					CreatedAt:   &now,
+					UpdatedAt:   &now,
+				}
+				err = taskRepo.Save(context.Background(), task)
+				if err != nil {
+					return err
+				}
+
+				ability := &domain.Ability{
+					Name:       domain.AbilityNameGameServerTasks,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				}
+				err = rbacRepo.SaveAbility(context.Background(), ability)
+				if err != nil {
+					return err
+				}
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(uint(2)),
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					Forbidden:  false,
+				}
+				err = rbacRepo.SavePermission(context.Background(), permission)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name: "user_without_tasks_permission",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user",
+					Email: "user@example.com",
+					User: &domain.User{
+						ID:    2,
+						Login: "user",
+						Email: "user@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(
+				taskRepo *inmemory.ServerTaskRepository,
+				serverRepo *inmemory.ServerRepository,
+				_ *inmemory.RBACRepository,
+			) error {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				err := serverRepo.Save(context.Background(), server)
+				if err != nil {
+					return err
+				}
+
+				serverRepo.AddUserServer(2, 1)
+
+				task := &domain.ServerTask{
+					ID:          1,
+					Command:     "restart",
+					ServerID:    1,
+					Repeat:      1,
+					ExecuteDate: time.Now().Add(time.Hour),
+					CreatedAt:   &now,
+					UpdatedAt:   &now,
+				}
+				err = taskRepo.Save(context.Background(), task)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			wantStatus: http.StatusForbidden,
+			wantError:  "user does not have required permissions",
+		},
+		{
+			name: "user_with_forbidden_tasks_permission",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user",
+					Email: "user@example.com",
+					User: &domain.User{
+						ID:    2,
+						Login: "user",
+						Email: "user@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(
+				taskRepo *inmemory.ServerTaskRepository,
+				serverRepo *inmemory.ServerRepository,
+				rbacRepo *inmemory.RBACRepository,
+			) error {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				err := serverRepo.Save(context.Background(), server)
+				if err != nil {
+					return err
+				}
+
+				serverRepo.AddUserServer(2, 1)
+
+				task := &domain.ServerTask{
+					ID:          1,
+					Command:     "restart",
+					ServerID:    1,
+					Repeat:      1,
+					ExecuteDate: time.Now().Add(time.Hour),
+					CreatedAt:   &now,
+					UpdatedAt:   &now,
+				}
+				err = taskRepo.Save(context.Background(), task)
+				if err != nil {
+					return err
+				}
+
+				ability := &domain.Ability{
+					Name:       domain.AbilityNameGameServerTasks,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				}
+				err = rbacRepo.SaveAbility(context.Background(), ability)
+				if err != nil {
+					return err
+				}
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(uint(2)),
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					Forbidden:  true,
+				}
+				err = rbacRepo.SavePermission(context.Background(), permission)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			wantStatus: http.StatusForbidden,
+			wantError:  "user does not have required permissions",
+		},
+		{
+			name: "user_with_role_based_permissions",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "user",
+					Email: "user@example.com",
+					User: &domain.User{
+						ID:    2,
+						Login: "user",
+						Email: "user@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(
+				taskRepo *inmemory.ServerTaskRepository,
+				serverRepo *inmemory.ServerRepository,
+				rbacRepo *inmemory.RBACRepository,
+			) error {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				err := serverRepo.Save(context.Background(), server)
+				if err != nil {
+					return err
+				}
+
+				serverRepo.AddUserServer(2, 1)
+
+				task := &domain.ServerTask{
+					ID:          1,
+					Command:     "restart",
+					ServerID:    1,
+					Repeat:      1,
+					ExecuteDate: time.Now().Add(time.Hour),
+					CreatedAt:   &now,
+					UpdatedAt:   &now,
+				}
+				err = taskRepo.Save(context.Background(), task)
+				if err != nil {
+					return err
+				}
+
+				serverRole := &domain.Role{
+					Name:  "server_manager",
+					Title: lo.ToPtr("Server Manager"),
+				}
+				err = rbacRepo.SaveRole(context.Background(), serverRole)
+				if err != nil {
+					return err
+				}
+
+				err = rbacRepo.AssignRolesForEntity(
+					context.Background(),
+					2,
+					domain.EntityTypeUser,
+					[]domain.RestrictedRole{domain.NewRestrictedRoleFromRole(*serverRole)},
+				)
+				if err != nil {
+					return err
+				}
+
+				ability := &domain.Ability{
+					Name:       domain.AbilityNameGameServerTasks,
+					EntityType: lo.ToPtr(domain.EntityTypeServer),
+					EntityID:   lo.ToPtr(uint(1)),
+				}
+				err = rbacRepo.SaveAbility(context.Background(), ability)
+				if err != nil {
+					return err
+				}
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(serverRole.ID),
+					EntityType: lo.ToPtr(domain.EntityTypeRole),
+					Forbidden:  false,
+				}
+				err = rbacRepo.SavePermission(context.Background(), permission)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name: "admin_bypasses_server_permissions",
+			setupAuth: func() context.Context {
+				session := &auth.Session{
+					Login: "admin",
+					Email: "admin@example.com",
+					User: &domain.User{
+						ID:    3,
+						Login: "admin",
+						Email: "admin@example.com",
+					},
+				}
+
+				return auth.ContextWithSession(context.Background(), session)
+			},
+			setupRepos: func(
+				taskRepo *inmemory.ServerTaskRepository,
+				serverRepo *inmemory.ServerRepository,
+				rbacRepo *inmemory.RBACRepository,
+			) error {
+				now := time.Now()
+
+				server := &domain.Server{
+					ID:         1,
+					UUID:       uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+					UUIDShort:  "short1",
+					Name:       "Test Server",
+					GameID:     "cs",
+					ServerIP:   "127.0.0.1",
+					ServerPort: 27015,
+					Dir:        "/home/gameap/servers/test1",
+					CreatedAt:  &now,
+					UpdatedAt:  &now,
+				}
+				err := serverRepo.Save(context.Background(), server)
+				if err != nil {
+					return err
+				}
+
+				task := &domain.ServerTask{
+					ID:          1,
+					Command:     "restart",
+					ServerID:    1,
+					Repeat:      1,
+					ExecuteDate: time.Now().Add(time.Hour),
+					CreatedAt:   &now,
+					UpdatedAt:   &now,
+				}
+				err = taskRepo.Save(context.Background(), task)
+				if err != nil {
+					return err
+				}
+
+				ability := &domain.Ability{
+					Name:  domain.AbilityNameAdminRolesPermissions,
+					Title: lo.ToPtr("Admin Permissions"),
+				}
+				err = rbacRepo.SaveAbility(context.Background(), ability)
+				if err != nil {
+					return err
+				}
+
+				permission := &domain.Permission{
+					AbilityID:  ability.ID,
+					EntityID:   lo.ToPtr(uint(3)),
+					EntityType: lo.ToPtr(domain.EntityTypeUser),
+					Forbidden:  false,
+				}
+				err = rbacRepo.SavePermission(context.Background(), permission)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			wantStatus: http.StatusNoContent,
 		},
 	}
 

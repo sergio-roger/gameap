@@ -35,8 +35,8 @@ type fileService interface {
 
 type Handler struct {
 	serverFinder   *serversbase.ServerFinder
+	abilityChecker *serversbase.AbilityChecker
 	nodeRepo       repositories.NodeRepository
-	rbac           base.RBAC
 	daemonCommands daemonCommands
 	fileService    fileService
 	responder      base.Responder
@@ -52,8 +52,8 @@ func NewHandler(
 ) *Handler {
 	return &Handler{
 		serverFinder:   serversbase.NewServerFinder(serverRepo, rbac),
+		abilityChecker: serversbase.NewAbilityChecker(rbac),
 		nodeRepo:       nodeRepo,
-		rbac:           rbac,
 		daemonCommands: daemonCommands,
 		fileService:    fs,
 		responder:      responder,
@@ -92,24 +92,13 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	canView, err := h.rbac.CanForEntity(
+	if err = h.abilityChecker.CheckOrError(
 		ctx,
 		session.User.ID,
-		domain.EntityTypeServer,
 		server.ID,
 		[]domain.AbilityName{domain.AbilityNameGameServerConsoleView},
-	)
-	if err != nil {
-		h.responder.WriteError(ctx, rw, errors.WithMessage(err, "failed to check console view permission"))
-
-		return
-	}
-
-	if !canView {
-		h.responder.WriteError(ctx, rw, api.WrapHTTPError(
-			errors.New("user does not have permission to view console"),
-			http.StatusForbidden,
-		))
+	); err != nil {
+		h.responder.WriteError(ctx, rw, err)
 
 		return
 	}

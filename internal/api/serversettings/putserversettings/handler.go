@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gameap/gameap/internal/api/base"
+	serversbase "github.com/gameap/gameap/internal/api/servers/base"
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/filters"
 	"github.com/gameap/gameap/internal/repositories"
@@ -22,7 +23,8 @@ const (
 
 type Handler struct {
 	serverSettingsRepo repositories.ServerSettingRepository
-	serversRepo        repositories.ServerRepository
+	serverFinder       *serversbase.ServerFinder
+	abilityChecker     *serversbase.AbilityChecker
 	gameModsRepo       repositories.GameModRepository
 	rbac               base.RBAC
 	responder          base.Responder
@@ -30,14 +32,15 @@ type Handler struct {
 
 func NewHandler(
 	serverSettingsRepo repositories.ServerSettingRepository,
-	serversRepo repositories.ServerRepository,
+	serverRepo repositories.ServerRepository,
 	gameModsRepo repositories.GameModRepository,
 	rbac base.RBAC,
 	responder base.Responder,
 ) *Handler {
 	return &Handler{
 		serverSettingsRepo: serverSettingsRepo,
-		serversRepo:        serversRepo,
+		serverFinder:       serversbase.NewServerFinder(serverRepo, rbac),
+		abilityChecker:     serversbase.NewAbilityChecker(rbac),
 		gameModsRepo:       gameModsRepo,
 		rbac:               rbac,
 		responder:          responder,
@@ -69,31 +72,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	server, err := h.findUserServer(ctx, session.User, serverID)
+	server, err := h.serverFinder.FindUserServer(ctx, session.User, serverID)
 	if err != nil {
 		h.responder.WriteError(ctx, rw, err)
-
-		return
-	}
-
-	canControl, err := h.rbac.CanForEntity(
-		ctx,
-		session.User.ID,
-		domain.EntityTypeServer,
-		server.ID,
-		[]domain.AbilityName{domain.AbilityNameGameServerCommon, domain.AbilityNameGameServerSettings},
-	)
-	if err != nil {
-		h.responder.WriteError(ctx, rw, errors.WithMessage(err, "failed to check permissions"))
-
-		return
-	}
-
-	if !canControl {
-		h.responder.WriteError(ctx, rw, api.WrapHTTPError(
-			errors.New("insufficient permissions"),
-			http.StatusForbidden,
-		))
 
 		return
 	}
@@ -101,6 +82,18 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	isAdmin, err := h.rbac.Can(ctx, session.User.ID, []domain.AbilityName{domain.AbilityNameAdminRolesPermissions})
 	if err != nil {
 		h.responder.WriteError(ctx, rw, errors.WithMessage(err, "failed to check admin permissions"))
+
+		return
+	}
+
+	err = h.abilityChecker.CheckOrError(
+		ctx,
+		session.User.ID,
+		server.ID,
+		[]domain.AbilityName{domain.AbilityNameGameServerCommon, domain.AbilityNameGameServerSettings},
+	)
+	if err != nil {
+		h.responder.WriteError(ctx, rw, err)
 
 		return
 	}
@@ -136,35 +129,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	h.responder.Write(ctx, rw, SuccessResponse{})
-}
-
-func (h *Handler) findUserServer(ctx context.Context, user *domain.User, serverID uint) (*domain.Server, error) {
-	isAdmin, err := h.rbac.Can(ctx, user.ID, []domain.AbilityName{domain.AbilityNameAdminRolesPermissions})
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to check admin permissions")
-	}
-
-	filter := &filters.FindServer{
-		IDs: []uint{serverID},
-	}
-
-	if !isAdmin {
-		filter.UserIDs = []uint{user.ID}
-	}
-
-	servers, err := h.serversRepo.Find(ctx, filter, nil, &filters.Pagination{
-		Limit:  1,
-		Offset: 0,
-	})
-	if err != nil {
-		return nil, errors.WithMessage(err, "failed to find server")
-	}
-
-	if len(servers) == 0 {
-		return nil, api.NewNotFoundError("server not found")
-	}
-
-	return &servers[0], nil
 }
 
 func (h *Handler) findGameMod(ctx context.Context, gameModID uint) (*domain.GameMod, error) {
