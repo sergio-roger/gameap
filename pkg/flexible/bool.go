@@ -42,9 +42,29 @@ func anyToBool(v any) bool {
 		}
 
 		return b
-	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+	case int:
 		return val != 0
-	case float32, float64:
+	case int8:
+		return val != 0
+	case int16:
+		return val != 0
+	case int32:
+		return val != 0
+	case int64:
+		return val != 0
+	case uint:
+		return val != 0
+	case uint8:
+		return val != 0
+	case uint16:
+		return val != 0
+	case uint32:
+		return val != 0
+	case uint64:
+		return val != 0
+	case float32:
+		return val != 0.0
+	case float64:
 		return val != 0.0
 	default:
 		return false

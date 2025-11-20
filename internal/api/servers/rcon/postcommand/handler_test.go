@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/rbac"
 	"github.com/gameap/gameap/internal/repositories/inmemory"
@@ -643,7 +645,7 @@ func TestGetRconPort(t *testing.T) {
 			name: "custom_rcon_port",
 			server: &domain.Server{
 				ServerPort: 27015,
-				RconPort:   intPtr(27020),
+				RconPort:   lo.ToPtr(27020),
 			},
 			want: 27020,
 		},
@@ -663,10 +665,6 @@ func TestGetRconPort(t *testing.T) {
 			assert.Equal(t, tt.want, port)
 		})
 	}
-}
-
-func intPtr(i int) *int {
-	return &i
 }
 
 func TestCommandRequest_Validate(t *testing.T) {

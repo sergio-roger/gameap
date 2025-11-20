@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/samber/lo"
+
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/repositories/inmemory"
 	"github.com/gameap/gameap/internal/services"
@@ -392,84 +394,84 @@ func TestUpdateProfileInput_Validate(t *testing.T) {
 		{
 			name: "valid name only",
 			input: updateProfileInput{
-				Name: stringPtr("Valid TokenName"),
+				Name: lo.ToPtr("Valid TokenName"),
 			},
 			wantError: "",
 		},
 		{
 			name: "valid password only",
 			input: updateProfileInput{
-				Password:        stringPtr("validpassword123"),
-				CurrentPassword: stringPtr("currentpassword"),
+				Password:        lo.ToPtr("validpassword123"),
+				CurrentPassword: lo.ToPtr("currentpassword"),
 			},
 			wantError: "",
 		},
 		{
 			name: "valid name and password",
 			input: updateProfileInput{
-				Name:            stringPtr("Valid TokenName"),
-				Password:        stringPtr("validpassword123"),
-				CurrentPassword: stringPtr("currentpassword"),
+				Name:            lo.ToPtr("Valid TokenName"),
+				Password:        lo.ToPtr("validpassword123"),
+				CurrentPassword: lo.ToPtr("currentpassword"),
 			},
 			wantError: "",
 		},
 		{
 			name: "empty name",
 			input: updateProfileInput{
-				Name: stringPtr(""),
+				Name: lo.ToPtr(""),
 			},
 			wantError: "name cannot be empty",
 		},
 		{
 			name: "name too long",
 			input: updateProfileInput{
-				Name: stringPtr(strings.Repeat("a", 256)),
+				Name: lo.ToPtr(strings.Repeat("a", 256)),
 			},
 			wantError: "name must not exceed 255 characters",
 		},
 		{
 			name: "password too short",
 			input: updateProfileInput{
-				Password:        stringPtr("short"),
-				CurrentPassword: stringPtr("currentpassword"),
+				Password:        lo.ToPtr("short"),
+				CurrentPassword: lo.ToPtr("currentpassword"),
 			},
 			wantError: "password must be at least 8 characters long",
 		},
 		{
 			name: "password too long",
 			input: updateProfileInput{
-				Password:        stringPtr(strings.Repeat("a", 65)),
-				CurrentPassword: stringPtr("currentpassword"),
+				Password:        lo.ToPtr(strings.Repeat("a", 65)),
+				CurrentPassword: lo.ToPtr("currentpassword"),
 			},
 			wantError: "password must not exceed 64 characters",
 		},
 		{
 			name: "empty password",
 			input: updateProfileInput{
-				Password:        stringPtr(""),
-				CurrentPassword: stringPtr("currentpassword"),
+				Password:        lo.ToPtr(""),
+				CurrentPassword: lo.ToPtr("currentpassword"),
 			},
 			wantError: "password cannot be empty",
 		},
 		{
 			name: "empty current password",
 			input: updateProfileInput{
-				Password:        stringPtr("validpassword123"),
-				CurrentPassword: stringPtr(""),
+				Password:        lo.ToPtr("validpassword123"),
+				CurrentPassword: lo.ToPtr(""),
 			},
 			wantError: "current password cannot be empty",
 		},
 		{
 			name: "name with whitespace gets trimmed",
 			input: updateProfileInput{
-				Name: stringPtr("  Valid TokenName  "),
+				Name: lo.ToPtr("  Valid TokenName  "),
 			},
 			wantError: "",
 		},
 		{
 			name: "whitespace only name becomes empty",
 			input: updateProfileInput{
-				Name: stringPtr("   "),
+				Name: lo.ToPtr("   "),
 			},
 			wantError: "name cannot be empty",
 		},
@@ -500,6 +502,3 @@ func TestNewUpdateProfileResponse(t *testing.T) {
 }
 
 // Helper function to create string pointers.
-func stringPtr(s string) *string {
-	return &s
-}

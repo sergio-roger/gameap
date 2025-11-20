@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/rbac"
 	"github.com/gameap/gameap/internal/repositories/inmemory"
@@ -42,8 +44,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			userID: "1",
 			requestBody: updateUserInput{
 				Email:    "updated@example.com",
-				Name:     stringPtr("Updated User"),
-				Password: stringPtr("newpassword123"),
+				Name:     lo.ToPtr("Updated User"),
+				Password: lo.ToPtr("newpassword123"),
 				Roles:    []string{"user"},
 				Servers:  []uint{1, 2},
 			},
@@ -92,8 +94,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			userID: "1",
 			requestBody: updateUserInput{
 				Email:    "updated@example.com",
-				Name:     stringPtr("Updated User"),
-				Password: stringPtr(""),
+				Name:     lo.ToPtr("Updated User"),
+				Password: lo.ToPtr(""),
 				Roles:    []string{"user"},
 				Servers:  []uint{},
 			},
@@ -270,7 +272,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			userID: "1",
 			requestBody: updateUserInput{
 				Email:    "test@example.com",
-				Password: stringPtr("short"),
+				Password: lo.ToPtr("short"),
 				Roles:    []string{},
 				Servers:  []uint{},
 			},
@@ -473,8 +475,4 @@ func TestNewUserResponseFromUser_NoRoles(t *testing.T) {
 	assert.Nil(t, response.Name)
 	assert.NotNil(t, response.Roles)
 	assert.Empty(t, response.Roles)
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

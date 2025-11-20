@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/samber/lo"
+
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/rbac"
 	"github.com/gameap/gameap/internal/repositories/inmemory"
@@ -40,7 +42,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				Login:    "newuser",
 				Email:    "newuser@example.com",
 				Password: "testpass123",
-				Name:     stringPtr("New User"),
+				Name:     lo.ToPtr("New User"),
 				Roles:    []string{"user"},
 				Servers:  []uint{},
 			},
@@ -329,7 +331,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				Login:    "testuser",
 				Email:    "test@example.com",
 				Password: "password123",
-				Name:     stringPtr(string(make([]byte, 256))),
+				Name:     lo.ToPtr(string(make([]byte, 256))),
 				Roles:    []string{},
 				Servers:  []uint{},
 			},
@@ -422,7 +424,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				Login:    "testuser",
 				Email:    "test@example.com",
 				Password: "password123",
-				Name:     stringPtr("   "),
+				Name:     lo.ToPtr("   "),
 				Roles:    []string{},
 				Servers:  []uint{},
 			},
@@ -522,7 +524,7 @@ func TestHandler_CreateUserWithRoles(t *testing.T) {
 		Login:    "newuser",
 		Email:    "newuser@example.com",
 		Password: "password123",
-		Name:     stringPtr("New User"),
+		Name:     lo.ToPtr("New User"),
 		Roles:    []string{"user"},
 		Servers:  []uint{},
 	}
@@ -629,8 +631,4 @@ func TestNewUserResponseFromUser_NoRoles(t *testing.T) {
 	assert.Nil(t, response.Name)
 	assert.NotNil(t, response.Roles)
 	assert.Empty(t, response.Roles)
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/gameap/gameap/pkg/api"
 	"github.com/gameap/gameap/pkg/auth"
 	"github.com/gorilla/mux"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,11 +54,11 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedResponse: &daemonTaskOutputResponse{
 				ID:                1,
 				DedicatedServerID: 2,
-				ServerID:          uintPtr(2),
+				ServerID:          lo.ToPtr(uint(2)),
 				Task:              domain.DaemonTaskTypeServerInstall,
-				CreatedAt:         timePtr(time.Date(2025, 9, 25, 18, 30, 0, 0, time.UTC)),
-				UpdatedAt:         timePtr(time.Date(2025, 9, 25, 18, 30, 19, 0, time.UTC)),
-				Output:            stringPtr("Installation completed successfully\nServer started on port 27015"),
+				CreatedAt:         lo.ToPtr(time.Date(2025, 9, 25, 18, 30, 0, 0, time.UTC)),
+				UpdatedAt:         lo.ToPtr(time.Date(2025, 9, 25, 18, 30, 19, 0, time.UTC)),
+				Output:            lo.ToPtr("Installation completed successfully\nServer started on port 27015"),
 				Status:            domain.DaemonTaskStatusSuccess,
 			},
 		},
@@ -106,7 +107,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				ServerID:          nil,
 				Task:              domain.DaemonTaskTypeServerStop,
 				CreatedAt:         nil,
-				UpdatedAt:         timePtr(time.Date(2025, 9, 25, 18, 30, 0, 0, time.UTC)),
+				UpdatedAt:         lo.ToPtr(time.Date(2025, 9, 25, 18, 30, 0, 0, time.UTC)),
 				Output:            nil,
 				Status:            domain.DaemonTaskStatusWaiting,
 			},
@@ -203,17 +204,4 @@ func TestHandler_ServeHTTP_LargeOutput(t *testing.T) {
 	assert.Equal(t, uint(1), response.ID)
 	assert.NotNil(t, response.Output)
 	assert.Equal(t, largeOutput, *response.Output)
-}
-
-// Helper functions.
-func uintPtr(i uint) *uint {
-	return &i
-}
-
-func stringPtr(s string) *string {
-	return &s
-}
-
-func timePtr(t time.Time) *time.Time {
-	return &t
 }

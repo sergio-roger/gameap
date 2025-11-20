@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -417,6 +418,299 @@ func TestGameModVarDefault_MarshalUnmarshal_RoundTrip(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, test.input, result)
+		})
+	}
+}
+
+func TestGameMod_Merge(t *testing.T) {
+	tests := []struct {
+		name     string
+		base     *GameMod
+		other    *GameMod
+		expected *GameMod
+	}{
+		{
+			name: "merge_all_nil_fields_with_values",
+			base: &GameMod{
+				ID:       1,
+				GameCode: "csgo",
+				Name:     "Counter-Strike: GO",
+			},
+			other: &GameMod{
+				RemoteRepositoryLinux:   lo.ToPtr("linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./start.sh"),
+				StartCmdWindows:         lo.ToPtr("start.bat"),
+				KickCmd:                 lo.ToPtr("kick {player}"),
+				BanCmd:                  lo.ToPtr("ban {player}"),
+				ChnameCmd:               lo.ToPtr("name {name}"),
+				SrestartCmd:             lo.ToPtr("restart"),
+				ChmapCmd:                lo.ToPtr("changelevel {map}"),
+				SendmsgCmd:              lo.ToPtr("say {message}"),
+				PasswdCmd:               lo.ToPtr("password {pass}"),
+				FastRcon: GameModFastRconList{
+					{Info: "Status", Command: "status"},
+				},
+				Vars: GameModVarList{
+					{Var: "sv_cheats", Default: "0", Info: "Cheats", AdminVar: true},
+				},
+			},
+			expected: &GameMod{
+				ID:                      1,
+				GameCode:                "csgo",
+				Name:                    "Counter-Strike: GO",
+				RemoteRepositoryLinux:   lo.ToPtr("linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./start.sh"),
+				StartCmdWindows:         lo.ToPtr("start.bat"),
+				KickCmd:                 lo.ToPtr("kick {player}"),
+				BanCmd:                  lo.ToPtr("ban {player}"),
+				ChnameCmd:               lo.ToPtr("name {name}"),
+				SrestartCmd:             lo.ToPtr("restart"),
+				ChmapCmd:                lo.ToPtr("changelevel {map}"),
+				SendmsgCmd:              lo.ToPtr("say {message}"),
+				PasswdCmd:               lo.ToPtr("password {pass}"),
+				FastRcon: GameModFastRconList{
+					{Info: "Status", Command: "status"},
+				},
+				Vars: GameModVarList{
+					{Var: "sv_cheats", Default: "0", Info: "Cheats", AdminVar: true},
+				},
+			},
+		},
+		{
+			name: "override_existing_values",
+			base: &GameMod{
+				ID:                      1,
+				GameCode:                "csgo",
+				Name:                    "Counter-Strike: GO",
+				RemoteRepositoryLinux:   lo.ToPtr("old-linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("old-windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./old-start.sh"),
+				StartCmdWindows:         lo.ToPtr("old-start.bat"),
+				KickCmd:                 lo.ToPtr("old kick"),
+				FastRcon: GameModFastRconList{
+					{Info: "Old Status", Command: "old status"},
+				},
+				Vars: GameModVarList{
+					{Var: "old_var", Default: "old", Info: "Old", AdminVar: false},
+				},
+			},
+			other: &GameMod{
+				RemoteRepositoryLinux:   lo.ToPtr("new-linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("new-windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./new-start.sh"),
+				StartCmdWindows:         lo.ToPtr("new-start.bat"),
+				KickCmd:                 lo.ToPtr("new kick"),
+				FastRcon: GameModFastRconList{
+					{Info: "New Status", Command: "new status"},
+				},
+				Vars: GameModVarList{
+					{Var: "new_var", Default: "new", Info: "New", AdminVar: true},
+				},
+			},
+			expected: &GameMod{
+				ID:                      1,
+				GameCode:                "csgo",
+				Name:                    "Counter-Strike: GO",
+				RemoteRepositoryLinux:   lo.ToPtr("new-linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("new-windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./new-start.sh"),
+				StartCmdWindows:         lo.ToPtr("new-start.bat"),
+				KickCmd:                 lo.ToPtr("new kick"),
+				FastRcon: GameModFastRconList{
+					{Info: "New Status", Command: "new status"},
+				},
+				Vars: GameModVarList{
+					{Var: "new_var", Default: "new", Info: "New", AdminVar: true},
+				},
+			},
+		},
+		{
+			name: "nil_fields_in_other_do_not_override",
+			base: &GameMod{
+				ID:                      1,
+				GameCode:                "csgo",
+				Name:                    "Counter-Strike: GO",
+				RemoteRepositoryLinux:   lo.ToPtr("existing-linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("existing-windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./existing-start.sh"),
+				StartCmdWindows:         lo.ToPtr("existing-start.bat"),
+				KickCmd:                 lo.ToPtr("existing kick"),
+				BanCmd:                  lo.ToPtr("existing ban"),
+				ChnameCmd:               lo.ToPtr("existing chname"),
+				SrestartCmd:             lo.ToPtr("existing restart"),
+				ChmapCmd:                lo.ToPtr("existing chmap"),
+				SendmsgCmd:              lo.ToPtr("existing sendmsg"),
+				PasswdCmd:               lo.ToPtr("existing passwd"),
+			},
+			other: &GameMod{
+				FastRcon: GameModFastRconList{
+					{Info: "New Status", Command: "new status"},
+				},
+				Vars: GameModVarList{
+					{Var: "new_var", Default: "new", Info: "New", AdminVar: true},
+				},
+			},
+			expected: &GameMod{
+				ID:                      1,
+				GameCode:                "csgo",
+				Name:                    "Counter-Strike: GO",
+				RemoteRepositoryLinux:   lo.ToPtr("existing-linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("existing-windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./existing-start.sh"),
+				StartCmdWindows:         lo.ToPtr("existing-start.bat"),
+				KickCmd:                 lo.ToPtr("existing kick"),
+				BanCmd:                  lo.ToPtr("existing ban"),
+				ChnameCmd:               lo.ToPtr("existing chname"),
+				SrestartCmd:             lo.ToPtr("existing restart"),
+				ChmapCmd:                lo.ToPtr("existing chmap"),
+				SendmsgCmd:              lo.ToPtr("existing sendmsg"),
+				PasswdCmd:               lo.ToPtr("existing passwd"),
+				FastRcon: GameModFastRconList{
+					{Info: "New Status", Command: "new status"},
+				},
+				Vars: GameModVarList{
+					{Var: "new_var", Default: "new", Info: "New", AdminVar: true},
+				},
+			},
+		},
+		{
+			name: "partial_override",
+			base: &GameMod{
+				ID:                      1,
+				GameCode:                "csgo",
+				Name:                    "Counter-Strike: GO",
+				RemoteRepositoryLinux:   lo.ToPtr("existing-linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("existing-windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./existing-start.sh"),
+				KickCmd:                 lo.ToPtr("existing kick"),
+				BanCmd:                  lo.ToPtr("existing ban"),
+			},
+			other: &GameMod{
+				RemoteRepositoryWindows: lo.ToPtr("new-windows-repo"),
+				StartCmdWindows:         lo.ToPtr("new-start.bat"),
+				ChnameCmd:               lo.ToPtr("new chname"),
+				FastRcon: GameModFastRconList{
+					{Info: "Status", Command: "status"},
+				},
+				Vars: GameModVarList{},
+			},
+			expected: &GameMod{
+				ID:                      1,
+				GameCode:                "csgo",
+				Name:                    "Counter-Strike: GO",
+				RemoteRepositoryLinux:   lo.ToPtr("existing-linux-repo"),
+				RemoteRepositoryWindows: lo.ToPtr("new-windows-repo"),
+				StartCmdLinux:           lo.ToPtr("./existing-start.sh"),
+				StartCmdWindows:         lo.ToPtr("new-start.bat"),
+				KickCmd:                 lo.ToPtr("existing kick"),
+				BanCmd:                  lo.ToPtr("existing ban"),
+				ChnameCmd:               lo.ToPtr("new chname"),
+				FastRcon: GameModFastRconList{
+					{Info: "Status", Command: "status"},
+				},
+				Vars: GameModVarList{},
+			},
+		},
+		{
+			name: "empty_other",
+			base: &GameMod{
+				ID:                    1,
+				GameCode:              "csgo",
+				Name:                  "Counter-Strike: GO",
+				RemoteRepositoryLinux: lo.ToPtr("existing-linux-repo"),
+				FastRcon: GameModFastRconList{
+					{Info: "Old Status", Command: "old status"},
+				},
+				Vars: GameModVarList{
+					{Var: "old_var", Default: "old", Info: "Old", AdminVar: false},
+				},
+			},
+			other: &GameMod{},
+			expected: &GameMod{
+				ID:                    1,
+				GameCode:              "csgo",
+				Name:                  "Counter-Strike: GO",
+				RemoteRepositoryLinux: lo.ToPtr("existing-linux-repo"),
+				FastRcon:              nil,
+				Vars:                  nil,
+			},
+		},
+		{
+			name: "merge_fast_rcon_and_vars_overwrites_completely",
+			base: &GameMod{
+				ID:       1,
+				GameCode: "csgo",
+				Name:     "Counter-Strike: GO",
+				FastRcon: GameModFastRconList{
+					{Info: "Status", Command: "status"},
+					{Info: "Players", Command: "players"},
+				},
+				Vars: GameModVarList{
+					{Var: "sv_cheats", Default: "0", Info: "Cheats", AdminVar: true},
+					{Var: "hostname", Default: "Server", Info: "Name", AdminVar: false},
+				},
+			},
+			other: &GameMod{
+				FastRcon: GameModFastRconList{
+					{Info: "Maps", Command: "maps"},
+				},
+				Vars: GameModVarList{
+					{Var: "mp_timelimit", Default: "30", Info: "Time", AdminVar: true},
+				},
+			},
+			expected: &GameMod{
+				ID:       1,
+				GameCode: "csgo",
+				Name:     "Counter-Strike: GO",
+				FastRcon: GameModFastRconList{
+					{Info: "Maps", Command: "maps"},
+				},
+				Vars: GameModVarList{
+					{Var: "mp_timelimit", Default: "30", Info: "Time", AdminVar: true},
+				},
+			},
+		},
+		{
+			name: "merge_all_commands",
+			base: &GameMod{
+				ID:       1,
+				GameCode: "csgo",
+				Name:     "Counter-Strike: GO",
+			},
+			other: &GameMod{
+				KickCmd:     lo.ToPtr("kick_cmd"),
+				BanCmd:      lo.ToPtr("ban_cmd"),
+				ChnameCmd:   lo.ToPtr("chname_cmd"),
+				SrestartCmd: lo.ToPtr("srestart_cmd"),
+				ChmapCmd:    lo.ToPtr("chmap_cmd"),
+				SendmsgCmd:  lo.ToPtr("sendmsg_cmd"),
+				PasswdCmd:   lo.ToPtr("passwd_cmd"),
+				FastRcon:    GameModFastRconList{},
+				Vars:        GameModVarList{},
+			},
+			expected: &GameMod{
+				ID:          1,
+				GameCode:    "csgo",
+				Name:        "Counter-Strike: GO",
+				KickCmd:     lo.ToPtr("kick_cmd"),
+				BanCmd:      lo.ToPtr("ban_cmd"),
+				ChnameCmd:   lo.ToPtr("chname_cmd"),
+				SrestartCmd: lo.ToPtr("srestart_cmd"),
+				ChmapCmd:    lo.ToPtr("chmap_cmd"),
+				SendmsgCmd:  lo.ToPtr("sendmsg_cmd"),
+				PasswdCmd:   lo.ToPtr("passwd_cmd"),
+				FastRcon:    GameModFastRconList{},
+				Vars:        GameModVarList{},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			test.base.Merge(test.other)
+			assert.Equal(t, test.expected, test.base)
 		})
 	}
 }

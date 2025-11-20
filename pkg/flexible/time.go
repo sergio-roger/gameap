@@ -12,11 +12,14 @@ type Time struct {
 
 // supportedFormats lists all date/time formats that the API accepts.
 var supportedFormats = []string{
-	time.RFC3339,                // 2006-01-02T15:04:05Z07:00
-	"2006-01-02 15:04:05",       // MySQL datetime format
+	time.RFC3339,  // 2006-01-02T15:04:05Z07:00
+	time.DateTime, // MySQL datetime format
+	time.RFC3339Nano,
 	"2006-01-02T15:04:05",       // ISO 8601 without timezone
 	"2006-01-02 15:04:05 -0700", // With timezone
-	time.DateTime,               // 2006-01-02 15:04:05
+	"2006-01-02 15:04:05.999999999",
+	"2006-01-02T15:04:05.999999999",
+	"2006-01-02 15:04:05.9999999 -0700 MST",
 }
 
 // UnmarshalJSON implements json.Unmarshaler interface to accept multiple date formats.

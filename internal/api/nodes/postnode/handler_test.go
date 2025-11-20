@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/samber/lo"
+
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/files"
 	"github.com/gameap/gameap/internal/repositories/inmemory"
@@ -72,14 +74,14 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			name: "successful creation with optional fields",
 			input: createDedicatedServerInput{
 				Name:                "Test Server",
-				Description:         stringPtr("Test description"),
+				Description:         lo.ToPtr("Test description"),
 				Location:            "Montenegro",
 				IP:                  []string{"172.18.0.5", "10.0.0.1"},
 				OS:                  "windows",
 				Enabled:             false,
-				Provider:            stringPtr("AWS"),
+				Provider:            lo.ToPtr("AWS"),
 				WorkPath:            "/srv/gameap",
-				SteamcmdPath:        stringPtr("/srv/gameap/steamcmd"),
+				SteamcmdPath:        lo.ToPtr("/srv/gameap/steamcmd"),
 				GdaemonHost:         "172.18.0.5",
 				GdaemonPort:         31717,
 				ClientCertificateID: 2,
@@ -353,14 +355,14 @@ func TestHandler_NodeStoredCorrectly(t *testing.T) {
 
 	input := createDedicatedServerInput{
 		Name:                "Test Server",
-		Description:         stringPtr("Test description"),
+		Description:         lo.ToPtr("Test description"),
 		Location:            "Montenegro",
 		IP:                  []string{"172.18.0.5"},
 		OS:                  "linux",
 		Enabled:             true,
-		Provider:            stringPtr("Unknown"),
+		Provider:            lo.ToPtr("Unknown"),
 		WorkPath:            "/srv/gameap",
-		SteamcmdPath:        stringPtr("/srv/gameap/steamcmd"),
+		SteamcmdPath:        lo.ToPtr("/srv/gameap/steamcmd"),
 		GdaemonHost:         "10.20.30.40",
 		GdaemonPort:         12345,
 		ClientCertificateID: 1,
@@ -495,8 +497,4 @@ func TestHandler_APIKeyGenerated(t *testing.T) {
 
 	assert.Len(t, nodes[0].GdaemonAPIKey, apiKeyLength)
 	assert.NotEmpty(t, nodes[0].GdaemonAPIKey)
-}
-
-func stringPtr(s string) *string {
-	return &s
 }

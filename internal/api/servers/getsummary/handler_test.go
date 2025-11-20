@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/samber/lo"
+
 	"github.com/gameap/gameap/internal/domain"
 	"github.com/gameap/gameap/internal/rbac"
 	"github.com/gameap/gameap/internal/repositories/inmemory"
@@ -344,15 +346,15 @@ func TestHandler_calculateSummary(t *testing.T) {
 			servers: []domain.Server{
 				{
 					ProcessActive:    true,
-					LastProcessCheck: timePtr(now.Add(-30 * time.Second)),
+					LastProcessCheck: lo.ToPtr(now.Add(-30 * time.Second)),
 				},
 				{
 					ProcessActive:    false,
-					LastProcessCheck: timePtr(now.Add(-30 * time.Second)),
+					LastProcessCheck: lo.ToPtr(now.Add(-30 * time.Second)),
 				},
 				{
 					ProcessActive:    true,
-					LastProcessCheck: timePtr(now.Add(-150 * time.Second)),
+					LastProcessCheck: lo.ToPtr(now.Add(-150 * time.Second)),
 				},
 			},
 			wantTotal:   3,
@@ -364,11 +366,11 @@ func TestHandler_calculateSummary(t *testing.T) {
 			servers: []domain.Server{
 				{
 					ProcessActive:    true,
-					LastProcessCheck: timePtr(now.Add(-30 * time.Second)),
+					LastProcessCheck: lo.ToPtr(now.Add(-30 * time.Second)),
 				},
 				{
 					ProcessActive:    true,
-					LastProcessCheck: timePtr(now.Add(-60 * time.Second)),
+					LastProcessCheck: lo.ToPtr(now.Add(-60 * time.Second)),
 				},
 			},
 			wantTotal:   2,
@@ -380,7 +382,7 @@ func TestHandler_calculateSummary(t *testing.T) {
 			servers: []domain.Server{
 				{
 					ProcessActive:    false,
-					LastProcessCheck: timePtr(now.Add(-30 * time.Second)),
+					LastProcessCheck: lo.ToPtr(now.Add(-30 * time.Second)),
 				},
 				{
 					ProcessActive:    true,
@@ -412,8 +414,4 @@ func setupAdminUser(rbacRepo *inmemory.RBACRepository, userID uint) {
 
 	_ = rbacRepo.SaveAbility(context.Background(), ability)
 	_ = rbacRepo.Allow(context.Background(), userID, domain.EntityTypeUser, []domain.Ability{*ability})
-}
-
-func timePtr(t time.Time) *time.Time {
-	return &t
 }

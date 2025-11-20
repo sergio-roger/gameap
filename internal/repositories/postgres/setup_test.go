@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"testing"
 
+	trmsql "github.com/avito-tech/go-transaction-manager/drivers/sql/v2"
 	"github.com/gameap/gameap/internal/config"
+	"github.com/gameap/gameap/internal/repositories/base"
 	"github.com/gameap/gameap/migrations"
 	"github.com/gameap/gameap/pkg/testcontainer"
 	_ "github.com/jackc/pgx/v5/stdlib" // PostgreSQL driver
 )
 
 // SetupTestDB sets up and returns a test database connection for PostgreSQL tests.
-func SetupTestDB(t *testing.T, postgresDSN string) *sql.DB {
+func SetupTestDB(t *testing.T, postgresDSN string) base.DB {
 	t.Helper()
 
 	db, err := sql.Open("pgx", postgresDSN)
@@ -39,7 +41,7 @@ func SetupTestDB(t *testing.T, postgresDSN string) *sql.DB {
 		t.Fatalf("failed to run migrations: %v", err)
 	}
 
-	return db
+	return base.NewDBTxWrapper(db, trmsql.DefaultCtxGetter)
 }
 
 func clearTestDB(t *testing.T, db *sql.DB) {

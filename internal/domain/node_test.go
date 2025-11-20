@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"database/sql/driver"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_ParseNodeOS(t *testing.T) {
@@ -122,6 +124,405 @@ func Test_ParseNodeOS(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			result := ParseNodeOS(test.input)
 			assert.Equal(t, test.expectedOS, result)
+		})
+	}
+}
+
+func TestNodeOS_Value(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    NodeOS
+		expected driver.Value
+	}{
+		{
+			name:     "linux_os",
+			input:    NodeOSLinux,
+			expected: "linux",
+		},
+		{
+			name:     "windows_os",
+			input:    NodeOSWindows,
+			expected: "windows",
+		},
+		{
+			name:     "macos_os",
+			input:    NodeOSMacOS,
+			expected: "macos",
+		},
+		{
+			name:     "other_os",
+			input:    NodeOSOther,
+			expected: "other",
+		},
+		{
+			name:     "invalid_os_returns_other",
+			input:    NodeOS("invalid"),
+			expected: "other",
+		},
+		{
+			name:     "empty_os_returns_other",
+			input:    NodeOS(""),
+			expected: "other",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := test.input.Value()
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestNodeOS_Scan(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    any
+		expected NodeOS
+	}{
+		{
+			name:     "nil_value",
+			input:    nil,
+			expected: NodeOSOther,
+		},
+		{
+			name:     "linux_bytes",
+			input:    []byte("linux"),
+			expected: NodeOSLinux,
+		},
+		{
+			name:     "windows_bytes",
+			input:    []byte("windows"),
+			expected: NodeOSWindows,
+		},
+		{
+			name:     "macos_bytes",
+			input:    []byte("macos"),
+			expected: NodeOSMacOS,
+		},
+		{
+			name:     "other_bytes",
+			input:    []byte("other"),
+			expected: NodeOSOther,
+		},
+		{
+			name:     "linux_string",
+			input:    "linux",
+			expected: NodeOSLinux,
+		},
+		{
+			name:     "windows_string",
+			input:    "windows",
+			expected: NodeOSWindows,
+		},
+		{
+			name:     "macos_string",
+			input:    "macos",
+			expected: NodeOSMacOS,
+		},
+		{
+			name:     "ubuntu_string",
+			input:    "ubuntu",
+			expected: NodeOSLinux,
+		},
+		{
+			name:     "debian_bytes",
+			input:    []byte("debian"),
+			expected: NodeOSLinux,
+		},
+		{
+			name:     "darwin_string",
+			input:    "darwin",
+			expected: NodeOSMacOS,
+		},
+		{
+			name:     "invalid_string",
+			input:    "invalid",
+			expected: NodeOSOther,
+		},
+		{
+			name:     "empty_string",
+			input:    "",
+			expected: NodeOSOther,
+		},
+		{
+			name:     "empty_bytes",
+			input:    []byte(""),
+			expected: NodeOSOther,
+		},
+		{
+			name:     "unsupported_type",
+			input:    123,
+			expected: NodeOSOther,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var result NodeOS
+			err := result.Scan(test.input)
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestNodePreferInstallMethod_Value(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    NodePreferInstallMethod
+		expected driver.Value
+	}{
+		{
+			name:     "auto_method",
+			input:    NodePreferInstallMethodAuto,
+			expected: "auto",
+		},
+		{
+			name:     "copy_method",
+			input:    NodePreferInstallMethodCopy,
+			expected: "copy",
+		},
+		{
+			name:     "download_method",
+			input:    NodePreferInstallMethodDownload,
+			expected: "download",
+		},
+		{
+			name:     "script_method",
+			input:    NodePreferInstallMethodScript,
+			expected: "script",
+		},
+		{
+			name:     "steam_method",
+			input:    NodePreferInstallMethodSteam,
+			expected: "steam",
+		},
+		{
+			name:     "none_method",
+			input:    NodePreferInstallMethodNode,
+			expected: "none",
+		},
+		{
+			name:     "invalid_method_returns_auto",
+			input:    NodePreferInstallMethod("invalid"),
+			expected: "auto",
+		},
+		{
+			name:     "empty_method_returns_auto",
+			input:    NodePreferInstallMethod(""),
+			expected: "auto",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := test.input.Value()
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestIPList_Scan(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    any
+		expected IPList
+	}{
+		{
+			name:     "nil_value",
+			input:    nil,
+			expected: []string{},
+		},
+		{
+			name:     "empty_bytes",
+			input:    []byte(""),
+			expected: []string{},
+		},
+		{
+			name:     "empty_array_bytes",
+			input:    []byte("[]"),
+			expected: []string{},
+		},
+		{
+			name:     "single_ip_bytes",
+			input:    []byte(`["192.168.1.1"]`),
+			expected: []string{"192.168.1.1"},
+		},
+		{
+			name:     "multiple_ips_bytes",
+			input:    []byte(`["192.168.1.1","10.0.0.1","172.16.0.1"]`),
+			expected: []string{"192.168.1.1", "10.0.0.1", "172.16.0.1"},
+		},
+		{
+			name:     "empty_string",
+			input:    "",
+			expected: []string{},
+		},
+		{
+			name:     "empty_array_string",
+			input:    "[]",
+			expected: []string{},
+		},
+		{
+			name:     "single_ip_string",
+			input:    `["192.168.1.1"]`,
+			expected: []string{"192.168.1.1"},
+		},
+		{
+			name:     "multiple_ips_string",
+			input:    `["192.168.1.1","10.0.0.1"]`,
+			expected: []string{"192.168.1.1", "10.0.0.1"},
+		},
+		{
+			name:     "invalid_json_bytes",
+			input:    []byte(`{invalid json`),
+			expected: []string{},
+		},
+		{
+			name:     "invalid_json_string",
+			input:    `{invalid json`,
+			expected: []string{},
+		},
+		{
+			name:     "non_array_json_bytes",
+			input:    []byte(`{"key":"value"}`),
+			expected: []string{},
+		},
+		{
+			name:     "unsupported_type",
+			input:    123,
+			expected: []string{},
+		},
+		{
+			name:     "array_with_empty_strings",
+			input:    []byte(`["","192.168.1.1",""]`),
+			expected: []string{"", "192.168.1.1", ""},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var result IPList
+			err := result.Scan(test.input)
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, result)
+		})
+	}
+}
+
+func TestIPList_Value(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    IPList
+		expected string
+	}{
+		{
+			name:     "nil_list",
+			input:    nil,
+			expected: "[]",
+		},
+		{
+			name:     "empty_list",
+			input:    []string{},
+			expected: "[]",
+		},
+		{
+			name:     "single_ip",
+			input:    []string{"192.168.1.1"},
+			expected: `["192.168.1.1"]`,
+		},
+		{
+			name:     "multiple_ips",
+			input:    []string{"192.168.1.1", "10.0.0.1", "172.16.0.1"},
+			expected: `["192.168.1.1","10.0.0.1","172.16.0.1"]`,
+		},
+		{
+			name:     "ips_with_ports",
+			input:    []string{"192.168.1.1:8080", "10.0.0.1:3000"},
+			expected: `["192.168.1.1:8080","10.0.0.1:3000"]`,
+		},
+		{
+			name:     "ipv6_addresses",
+			input:    []string{"2001:db8::1", "fe80::1"},
+			expected: `["2001:db8::1","fe80::1"]`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := test.input.Value()
+			require.NoError(t, err)
+			assert.JSONEq(t, test.expected, result.(string))
+		})
+	}
+}
+
+func TestNodeOS_ScanAndValue_RoundTrip(t *testing.T) {
+	tests := []NodeOS{
+		NodeOSLinux,
+		NodeOSWindows,
+		NodeOSMacOS,
+		NodeOSOther,
+	}
+
+	for _, original := range tests {
+		t.Run(string(original), func(t *testing.T) {
+			value, err := original.Value()
+			require.NoError(t, err)
+
+			var result NodeOS
+			err = result.Scan(value)
+			require.NoError(t, err)
+
+			assert.Equal(t, original, result)
+		})
+	}
+}
+
+func TestIPList_ScanAndValue_RoundTrip(t *testing.T) {
+	tests := []struct {
+		name  string
+		input IPList
+	}{
+		{
+			name:  "nil_list",
+			input: nil,
+		},
+		{
+			name:  "empty_list",
+			input: []string{},
+		},
+		{
+			name:  "single_ip",
+			input: []string{"192.168.1.1"},
+		},
+		{
+			name:  "multiple_ips",
+			input: []string{"192.168.1.1", "10.0.0.1", "172.16.0.1"},
+		},
+		{
+			name:  "ipv4_and_ipv6_mixed",
+			input: []string{"192.168.1.1", "2001:db8::1", "10.0.0.1"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			value, err := test.input.Value()
+			require.NoError(t, err)
+
+			var result IPList
+			err = result.Scan(value)
+			require.NoError(t, err)
+
+			if test.input == nil {
+				assert.Empty(t, result)
+			} else {
+				assert.Equal(t, test.input, result)
+			}
 		})
 	}
 }

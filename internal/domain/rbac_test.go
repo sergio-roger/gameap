@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -153,8 +154,8 @@ func TestNewRestrictedRoleFromRole(t *testing.T) {
 			role: Role{
 				ID:    1,
 				Name:  "admin",
-				Title: stringPtr("Administrator"),
-				Level: uintPtr(10),
+				Title: lo.ToPtr("Administrator"),
+				Level: lo.ToPtr(uint(10)),
 			},
 		},
 		{
@@ -169,11 +170,11 @@ func TestNewRestrictedRoleFromRole(t *testing.T) {
 			role: Role{
 				ID:        3,
 				Name:      "moderator",
-				Title:     stringPtr("Moderator"),
-				Level:     uintPtr(5),
-				Scope:     intPtr(1),
-				CreatedAt: timePtr(time.Now()),
-				UpdatedAt: timePtr(time.Now()),
+				Title:     lo.ToPtr("Moderator"),
+				Level:     lo.ToPtr(uint(5)),
+				Scope:     lo.ToPtr(1),
+				CreatedAt: lo.ToPtr(time.Now()),
+				UpdatedAt: lo.ToPtr(time.Now()),
 			},
 		},
 	}
@@ -414,20 +415,4 @@ func TestRestrictedRole_CanBeRestricted(t *testing.T) {
 
 	assert.Equal(t, &restrictedToID, restrictedRole.RestrictedToID)
 	assert.Equal(t, &restrictedToType, restrictedRole.RestrictedToType)
-}
-
-func stringPtr(s string) *string {
-	return &s
-}
-
-func uintPtr(u uint) *uint {
-	return &u
-}
-
-func intPtr(i int) *int {
-	return &i
-}
-
-func timePtr(t time.Time) *time.Time {
-	return &t
 }

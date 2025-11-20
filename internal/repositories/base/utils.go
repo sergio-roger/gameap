@@ -24,12 +24,11 @@ func ParseTime(s string) (time.Time, error) {
 	formats := []string{
 		time.RFC3339,
 		time.RFC3339Nano,
-		"2006-01-02 15:04:05",
+		time.DateTime,
 		"2006-01-02T15:04:05",
 		"2006-01-02 15:04:05.999999999",
 		"2006-01-02T15:04:05.999999999",
 		"2006-01-02 15:04:05.9999999 -0700 MST",
-		time.DateTime,
 	}
 
 	for _, format := range formats {
