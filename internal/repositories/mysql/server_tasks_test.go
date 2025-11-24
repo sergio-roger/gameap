@@ -7,6 +7,7 @@ import (
 	"github.com/gameap/gameap/internal/repositories"
 	"github.com/gameap/gameap/internal/repositories/mysql"
 	repotesting "github.com/gameap/gameap/internal/repositories/testing"
+	"github.com/gameap/gameap/internal/services"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -20,6 +21,14 @@ func TestServerTaskRepository(t *testing.T) {
 	suite.Run(t, repotesting.NewServerTaskRepositorySuite(
 		func(_ *testing.T) repositories.ServerTaskRepository {
 			return mysql.NewServerTaskRepository(SetupTestDB(t, testMySQLDSN))
+		},
+		func(t *testing.T) repositories.ServerRepository {
+			t.Helper()
+
+			db := SetupTestDB(t, testMySQLDSN)
+			tm := services.NewNilTransactionManager()
+
+			return mysql.NewServerRepository(db, tm)
 		},
 	))
 }

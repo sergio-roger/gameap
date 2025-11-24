@@ -7,6 +7,7 @@ import (
 	"github.com/gameap/gameap/internal/repositories"
 	"github.com/gameap/gameap/internal/repositories/postgres"
 	repotesting "github.com/gameap/gameap/internal/repositories/testing"
+	"github.com/gameap/gameap/internal/services"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -22,6 +23,14 @@ func TestServerTaskRepository(t *testing.T) {
 			t.Helper()
 
 			return postgres.NewServerTaskRepository(SetupTestDB(t, testPostgresDSN))
+		},
+		func(t *testing.T) repositories.ServerRepository {
+			t.Helper()
+
+			db := SetupTestDB(t, testPostgresDSN)
+			tm := services.NewNilTransactionManager()
+
+			return postgres.NewServerRepository(db, tm)
 		},
 	))
 }

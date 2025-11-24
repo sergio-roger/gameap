@@ -15,9 +15,13 @@ import (
 )
 
 func TestServerTaskRepository(t *testing.T) {
+	serverRepo := inmemory.NewServerRepository()
 	suite.Run(t, repotesting.NewServerTaskRepositorySuite(
 		func(_ *testing.T) repositories.ServerTaskRepository {
-			return inmemory.NewServerTaskRepository(inmemory.NewServerRepository())
+			return inmemory.NewServerTaskRepository(serverRepo)
+		},
+		func(_ *testing.T) repositories.ServerRepository {
+			return serverRepo
 		},
 	))
 }

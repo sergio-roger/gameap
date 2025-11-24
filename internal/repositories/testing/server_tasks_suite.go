@@ -17,19 +17,28 @@ import (
 type ServerTaskRepositorySuite struct {
 	suite.Suite
 
-	repo repositories.ServerTaskRepository
+	repo       repositories.ServerTaskRepository
+	serverRepo repositories.ServerRepository
 
-	fn func(t *testing.T) repositories.ServerTaskRepository
+	fn       func(t *testing.T) repositories.ServerTaskRepository
+	serverFn func(t *testing.T) repositories.ServerRepository
 }
 
-func NewServerTaskRepositorySuite(fn func(t *testing.T) repositories.ServerTaskRepository) *ServerTaskRepositorySuite {
+func NewServerTaskRepositorySuite(
+	fn func(t *testing.T) repositories.ServerTaskRepository,
+	serverFn func(t *testing.T) repositories.ServerRepository,
+) *ServerTaskRepositorySuite {
 	return &ServerTaskRepositorySuite{
-		fn: fn,
+		fn:       fn,
+		serverFn: serverFn,
 	}
 }
 
 func (s *ServerTaskRepositorySuite) SetupTest() {
 	s.repo = s.fn(s.T())
+	if s.serverFn != nil {
+		s.serverRepo = s.serverFn(s.T())
+	}
 }
 
 func (s *ServerTaskRepositorySuite) TestServerTaskRepositorySave() {
@@ -275,6 +284,238 @@ func (s *ServerTaskRepositorySuite) TestServerTaskRepositoryDelete() {
 	s.T().Run("delete_non_existent_task", func(t *testing.T) {
 		err := s.repo.Delete(ctx, 99999)
 		require.NoError(t, err)
+	})
+}
+
+func (s *ServerTaskRepositorySuite) TestServerTaskRepositoryDefaultOrdering() {
+	ctx := context.Background()
+
+	executeDate := time.Now().Add(1 * time.Hour)
+
+	task1 := &domain.ServerTask{
+		Command:     domain.ServerTaskCommandStart,
+		ServerID:    7000,
+		ExecuteDate: executeDate,
+	}
+	task2 := &domain.ServerTask{
+		Command:     domain.ServerTaskCommandStop,
+		ServerID:    7001,
+		ExecuteDate: executeDate,
+	}
+	task3 := &domain.ServerTask{
+		Command:     domain.ServerTaskCommandRestart,
+		ServerID:    7002,
+		ExecuteDate: executeDate,
+	}
+
+	require.NoError(s.T(), s.repo.Save(ctx, task1))
+	require.NoError(s.T(), s.repo.Save(ctx, task2))
+	require.NoError(s.T(), s.repo.Save(ctx, task3))
+
+	s.T().Run("find_all_without_ordering_should_use_default_order", func(t *testing.T) {
+		results, err := s.repo.FindAll(ctx, nil, nil)
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(results), 3)
+
+		for i := 0; i < len(results)-1; i++ {
+			assert.LessOrEqual(t, results[i].ID, results[i+1].ID)
+		}
+	})
+
+	s.T().Run("find_without_ordering_should_use_default_order", func(t *testing.T) {
+		results, err := s.repo.Find(ctx, nil, nil, nil)
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, len(results), 3)
+
+		for i := 0; i < len(results)-1; i++ {
+			assert.LessOrEqual(t, results[i].ID, results[i+1].ID)
+		}
+	})
+
+	s.T().Run("find_with_filter_without_ordering_should_use_default_order", func(t *testing.T) {
+		filter := &filters.FindServerTask{
+			ServersIDs: []uint{7000, 7001, 7002},
+		}
+
+		results, err := s.repo.Find(ctx, filter, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, results, 3)
+
+		assert.Equal(t, task1.ID, results[0].ID)
+		assert.Equal(t, task2.ID, results[1].ID)
+		assert.Equal(t, task3.ID, results[2].ID)
+	})
+}
+
+func (s *ServerTaskRepositorySuite) TestServerTaskRepositoryFindWithNodeIDs() {
+	if s.serverRepo == nil {
+		s.T().Skip("serverRepo is not set, skipping TestServerTaskRepositoryFindWithNodeIDs")
+	}
+
+	ctx := context.Background()
+
+	executeDate := time.Now().Add(1 * time.Hour)
+
+	server1 := &domain.Server{
+		Name:       "Test Server 1",
+		GameID:     "test",
+		DSID:       1,
+		GameModID:  1,
+		ServerIP:   "127.0.0.1",
+		ServerPort: 27015,
+		Dir:        "/test1",
+	}
+	server2 := &domain.Server{
+		Name:       "Test Server 2",
+		GameID:     "test",
+		DSID:       1,
+		GameModID:  1,
+		ServerIP:   "127.0.0.1",
+		ServerPort: 27016,
+		Dir:        "/test2",
+	}
+	server3 := &domain.Server{
+		Name:       "Test Server 3",
+		GameID:     "test",
+		DSID:       2,
+		GameModID:  1,
+		ServerIP:   "127.0.0.1",
+		ServerPort: 27017,
+		Dir:        "/test3",
+	}
+	server4 := &domain.Server{
+		Name:       "Test Server 4",
+		GameID:     "test",
+		DSID:       2,
+		GameModID:  1,
+		ServerIP:   "127.0.0.1",
+		ServerPort: 27018,
+		Dir:        "/test4",
+	}
+
+	require.NoError(s.T(), s.serverRepo.Save(ctx, server1))
+	require.NoError(s.T(), s.serverRepo.Save(ctx, server2))
+	require.NoError(s.T(), s.serverRepo.Save(ctx, server3))
+	require.NoError(s.T(), s.serverRepo.Save(ctx, server4))
+
+	task1 := &domain.ServerTask{
+		Command:     domain.ServerTaskCommandStart,
+		ServerID:    server1.ID,
+		ExecuteDate: executeDate,
+	}
+	task2 := &domain.ServerTask{
+		Command:     domain.ServerTaskCommandStop,
+		ServerID:    server2.ID,
+		ExecuteDate: executeDate.Add(1 * time.Hour),
+	}
+	task3 := &domain.ServerTask{
+		Command:     domain.ServerTaskCommandRestart,
+		ServerID:    server3.ID,
+		ExecuteDate: executeDate.Add(2 * time.Hour),
+	}
+	task4 := &domain.ServerTask{
+		Command:     domain.ServerTaskCommandUpdate,
+		ServerID:    server4.ID,
+		ExecuteDate: executeDate.Add(3 * time.Hour),
+	}
+
+	require.NoError(s.T(), s.repo.Save(ctx, task1))
+	require.NoError(s.T(), s.repo.Save(ctx, task2))
+	require.NoError(s.T(), s.repo.Save(ctx, task3))
+	require.NoError(s.T(), s.repo.Save(ctx, task4))
+
+	s.T().Run("find_by_single_node_id", func(t *testing.T) {
+		filter := &filters.FindServerTask{NodeIDs: []uint{1}}
+
+		results, err := s.repo.Find(ctx, filter, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, results, 2)
+
+		serverIDs := make([]uint, 0, len(results))
+		for _, result := range results {
+			serverIDs = append(serverIDs, result.ServerID)
+		}
+
+		assert.Contains(t, serverIDs, server1.ID)
+		assert.Contains(t, serverIDs, server2.ID)
+	})
+
+	s.T().Run("find_by_multiple_node_ids", func(t *testing.T) {
+		filter := &filters.FindServerTask{NodeIDs: []uint{1, 2}}
+
+		results, err := s.repo.Find(ctx, filter, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, results, 4)
+
+		serverIDs := make([]uint, 0, len(results))
+		for _, result := range results {
+			serverIDs = append(serverIDs, result.ServerID)
+		}
+
+		assert.Contains(t, serverIDs, server1.ID)
+		assert.Contains(t, serverIDs, server2.ID)
+		assert.Contains(t, serverIDs, server3.ID)
+		assert.Contains(t, serverIDs, server4.ID)
+	})
+
+	s.T().Run("find_by_node_id_with_order_asc", func(t *testing.T) {
+		filter := &filters.FindServerTask{NodeIDs: []uint{1, 2}}
+		order := []filters.Sorting{
+			{Field: "id", Direction: filters.SortDirectionAsc},
+		}
+
+		results, err := s.repo.Find(ctx, filter, order, nil)
+		require.NoError(t, err)
+		require.Len(t, results, 4)
+
+		for i := 0; i < len(results)-1; i++ {
+			assert.LessOrEqual(t, results[i].ID, results[i+1].ID)
+		}
+	})
+
+	s.T().Run("find_by_node_id_with_order_desc", func(t *testing.T) {
+		filter := &filters.FindServerTask{NodeIDs: []uint{1, 2}}
+		order := []filters.Sorting{
+			{Field: "id", Direction: filters.SortDirectionDesc},
+		}
+
+		results, err := s.repo.Find(ctx, filter, order, nil)
+		require.NoError(t, err)
+		require.Len(t, results, 4)
+
+		for i := 0; i < len(results)-1; i++ {
+			assert.GreaterOrEqual(t, results[i].ID, results[i+1].ID)
+		}
+	})
+
+	s.T().Run("find_by_node_id_with_pagination", func(t *testing.T) {
+		filter := &filters.FindServerTask{NodeIDs: []uint{1, 2}}
+		pagination := &filters.Pagination{Limit: 2, Offset: 0}
+
+		results, err := s.repo.Find(ctx, filter, nil, pagination)
+		require.NoError(t, err)
+		assert.LessOrEqual(t, len(results), 2)
+	})
+
+	s.T().Run("find_by_node_id_and_server_id", func(t *testing.T) {
+		filter := &filters.FindServerTask{
+			NodeIDs:    []uint{1},
+			ServersIDs: []uint{server1.ID},
+		}
+
+		results, err := s.repo.Find(ctx, filter, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, results, 1)
+		assert.Equal(t, server1.ID, results[0].ServerID)
+		assert.Equal(t, domain.ServerTaskCommandStart, results[0].Command)
+	})
+
+	s.T().Run("find_by_non_existent_node_id", func(t *testing.T) {
+		filter := &filters.FindServerTask{NodeIDs: []uint{99999}}
+
+		results, err := s.repo.Find(ctx, filter, nil, nil)
+		require.NoError(t, err)
+		assert.Empty(t, results)
 	})
 }
 

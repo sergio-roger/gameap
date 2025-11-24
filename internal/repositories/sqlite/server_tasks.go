@@ -56,7 +56,7 @@ func (r *ServerTaskRepository) FindAll(
 	builder := sq.Select(wrappedServerTaskFields...).
 		From(base.ServerTasksTable)
 
-	return r.find(ctx, builder, order, pagination)
+	return r.find(ctx, builder, order, pagination, false)
 }
 
 func (r *ServerTaskRepository) Find(
@@ -85,7 +85,7 @@ func (r *ServerTaskRepository) Find(
 
 	builder = builder.Where(r.filterToSq(filter, useJoin))
 
-	return r.find(ctx, builder, order, pagination)
+	return r.find(ctx, builder, order, pagination, useJoin)
 }
 
 func (r *ServerTaskRepository) find(
@@ -93,13 +93,18 @@ func (r *ServerTaskRepository) find(
 	builder sq.SelectBuilder,
 	order []filters.Sorting,
 	pagination *filters.Pagination,
+	useJoin bool,
 ) ([]domain.ServerTask, error) {
 	if len(order) > 0 {
 		for _, o := range order {
-			builder = builder.OrderBy(o.String())
+			orderBy := o.Field
+			if useJoin && !strings.Contains(orderBy, ".") {
+				orderBy = base.ServerTasksTable + "." + orderBy
+			}
+			builder = builder.OrderBy(orderBy + " " + o.Direction.String())
 		}
 	} else {
-		builder = builder.OrderBy("id ASC")
+		builder = builder.OrderBy(base.ServerTasksTable + ".id ASC")
 	}
 
 	if pagination != nil {
