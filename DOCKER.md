@@ -213,7 +213,7 @@ services:
       HTTP_HOST: 0.0.0.0
       HTTP_PORT: 8025
       DATABASE_DRIVER: sqlite
-      DATABASE_URL: file:/var/lib/gameap/db.sqlite
+      DATABASE_URL: file:/var/lib/gameap/db.sqlite?_busy_timeout=5000&_journal_mode=WAL&cache=shared
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me-in-production}
       AUTH_SECRET: ${AUTH_SECRET:-change-me-in-production}
       CACHE_DRIVER: memory
@@ -256,7 +256,7 @@ docker pull gameap/gameap:v1.0.0
 docker run -d \
   -p 8025:8025 \
   -e DATABASE_DRIVER=sqlite \
-  -e DATABASE_URL=file:/var/lib/gameap/db.sqlite \
+  -e DATABASE_URL=file:/var/lib/gameap/db.sqlite?_busy_timeout=5000&_journal_mode=WAL&cache=shared \
   -e ENCRYPTION_KEY=your-secret-key \
   -e AUTH_SECRET=your-auth-secret \
   -v gameap-data:/var/lib/gameap \
@@ -310,7 +310,7 @@ All configuration is done via environment variables:
 - `DATABASE_URL` - Connection string:
   - PostgreSQL: `postgres://user:pass@host:5432/dbname?sslmode=disable`
   - MySQL: `user:pass@tcp(host:3306)/dbname?parseTime=true`
-  - SQLite: `file:/path/to/db.sqlite`
+  - SQLite: `file:/path/to/db.sqlite?_busy_timeout=5000&_journal_mode=WAL&cache=shared` (parameters recommended for concurrent access)
 
 #### Security
 - `ENCRYPTION_KEY` - **Required** - Key for encrypting sensitive data

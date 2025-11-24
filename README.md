@@ -46,7 +46,7 @@ docker-compose up -d
 docker pull gameap/gameap:latest
 docker run -d -p 8025:8025 \
   -e DATABASE_DRIVER=sqlite \
-  -e DATABASE_URL=file:/db.sqlite \
+  -e DATABASE_URL=file:/db.sqlite?_busy_timeout=5000&_journal_mode=WAL&cache=shared \
   -e ENCRYPTION_KEY=your-secret-key \
   -e AUTH_SECRET=your-auth-secret \
   gameap/gameap:latest
@@ -71,7 +71,7 @@ GameAP is configured via environment variables. Below are the available configur
 - `DATABASE_URL` - Database connection URL (required)
   - MySQL: `username:password@tcp(host:port)/database?parseTime=true`
   - PostgreSQL: `postgres://username:password@host:port/database?sslmode=disable`
-  - SQLite: `file:path/to/database.db`
+  - SQLite: `file:path/to/database.db?_busy_timeout=5000&_journal_mode=WAL&cache=shared` (parameters recommended for production)
   - Inmemory: For `inmemory`, this can be left empty.
 
 ### Security Configuration
