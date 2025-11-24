@@ -13,7 +13,7 @@ type Config struct {
 	HTTPPort uint16 `env:"HTTP_PORT" envDefault:"8025"`
 
 	DatabaseDriver string `env:"DATABASE_DRIVER,required" envDefault:"mysql"`
-	DatabaseURL    string `env:"DATABASE_URL,required"`
+	DatabaseURL    string `env:"DATABASE_URL,required,notEmpty"`
 
 	EncryptionKey string `env:"ENCRYPTION_KEY" envDefault:""`
 	AuthSecret    string `env:"AUTH_SECRET,required,notEmpty" envDefault:""`
