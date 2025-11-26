@@ -55,6 +55,7 @@ func (r *RBACRepository) GetRoles(ctx context.Context) ([]domain.Role, error) {
 
 	for rows.Next() {
 		var role domain.Role
+		var createdAtStr, updatedAtStr *string
 
 		err = rows.Scan(
 			&role.ID,
@@ -62,11 +63,27 @@ func (r *RBACRepository) GetRoles(ctx context.Context) ([]domain.Role, error) {
 			&role.Title,
 			&role.Level,
 			&role.Scope,
-			&role.CreatedAt,
-			&role.UpdatedAt,
+			&createdAtStr,
+			&updatedAtStr,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to scan row")
+		}
+
+		if createdAtStr != nil && *createdAtStr != "" {
+			createdAt, err := base.ParseTime(*createdAtStr)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to parse created_at time")
+			}
+			role.CreatedAt = &createdAt
+		}
+
+		if updatedAtStr != nil && *updatedAtStr != "" {
+			updatedAt, err := base.ParseTime(*updatedAtStr)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to parse updated_at time")
+			}
+			role.UpdatedAt = &updatedAt
 		}
 
 		roles = append(roles, role)
@@ -110,6 +127,7 @@ func (r *RBACRepository) GetRolesForEntity(
 
 	for rows.Next() {
 		var role domain.RestrictedRole
+		var createdAtStr, updatedAtStr *string
 
 		err = rows.Scan(
 			&role.ID,
@@ -117,13 +135,29 @@ func (r *RBACRepository) GetRolesForEntity(
 			&role.Title,
 			&role.Level,
 			&role.Scope,
-			&role.CreatedAt,
-			&role.UpdatedAt,
+			&createdAtStr,
+			&updatedAtStr,
 			&role.RestrictedToID,
 			&role.RestrictedToType,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to scan row")
+		}
+
+		if createdAtStr != nil && *createdAtStr != "" {
+			createdAt, err := base.ParseTime(*createdAtStr)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to parse created_at time")
+			}
+			role.CreatedAt = &createdAt
+		}
+
+		if updatedAtStr != nil && *updatedAtStr != "" {
+			updatedAt, err := base.ParseTime(*updatedAtStr)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to parse updated_at time")
+			}
+			role.UpdatedAt = &updatedAt
 		}
 
 		roles = append(roles, role)
@@ -168,6 +202,7 @@ func (r *RBACRepository) GetPermissions(
 	for rows.Next() {
 		var permission domain.Permission
 		var ability domain.Ability
+		var createdAtStr, updatedAtStr *string
 
 		err = rows.Scan(
 			&permission.ID,
@@ -184,11 +219,27 @@ func (r *RBACRepository) GetPermissions(
 			&ability.OnlyOwned,
 			&ability.Options,
 			&ability.Scope,
-			&ability.CreatedAt,
-			&ability.UpdatedAt,
+			&createdAtStr,
+			&updatedAtStr,
 		)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to scan row")
+		}
+
+		if createdAtStr != nil && *createdAtStr != "" {
+			createdAt, err := base.ParseTime(*createdAtStr)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to parse created_at time")
+			}
+			ability.CreatedAt = &createdAt
+		}
+
+		if updatedAtStr != nil && *updatedAtStr != "" {
+			updatedAt, err := base.ParseTime(*updatedAtStr)
+			if err != nil {
+				return nil, errors.WithMessage(err, "failed to parse updated_at time")
+			}
+			ability.UpdatedAt = &updatedAt
 		}
 
 		permission.Ability = &ability
