@@ -68,7 +68,7 @@ var testNode = domain.Node{
 	GdaemonHost:         "127.0.0.1",
 	GdaemonPort:         31717,
 	GdaemonAPIKey:       "test-key",
-	WorkPath:            "/var/gameap",
+	WorkPath:            "/srv/gameap",
 	GdaemonServerCert:   "test-cert",
 	ClientCertificateID: 1,
 }
@@ -159,7 +159,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -182,14 +182,14 @@ func TestHandler_ServeHTTP(t *testing.T) {
 						size uint64,
 						perms os.FileMode,
 					) error {
-						assert.Equal(t, "/home/gameap/servers/test1/eula.txt", filePath)
+						assert.Equal(t, "/srv/gameap/servers/test1/eula.txt", filePath)
 						assert.Equal(t, uint64(18), size)
 						assert.Equal(t, os.FileMode(0o644), perms)
 
 						return nil
 					},
 					getFileInfoFunc: func(_ context.Context, _ *domain.Node, path string) (*daemon.FileDetails, error) {
-						assert.Equal(t, "/home/gameap/servers/test1/eula.txt", path)
+						assert.Equal(t, "/srv/gameap/servers/test1/eula.txt", path)
 
 						return &daemon.FileDetails{
 							Name:             "eula.txt",
@@ -263,7 +263,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -286,7 +286,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 						_ uint64,
 						_ os.FileMode,
 					) error {
-						assert.Equal(t, "/home/gameap/servers/test1/configs/server.cfg", filePath)
+						assert.Equal(t, "/srv/gameap/servers/test1/configs/server.cfg", filePath)
 
 						return nil
 					},
@@ -354,7 +354,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -411,7 +411,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -466,7 +466,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -592,7 +592,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -652,7 +652,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -733,7 +733,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -790,7 +790,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -861,7 +861,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -917,7 +917,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,

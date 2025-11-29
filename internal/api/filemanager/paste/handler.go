@@ -178,14 +178,14 @@ func (h *Handler) processItems(
 		return api.WrapHTTPError(err, http.StatusBadRequest)
 	}
 
-	destinationBase := filepath.Join(serverDir, req.Path)
+	destinationBase := filepath.Join(node.WorkPath, serverDir, req.Path)
 
 	for _, filePath := range req.Clipboard.Files {
 		if err := validatePath(filePath); err != nil {
 			return api.WrapHTTPError(err, http.StatusBadRequest)
 		}
 
-		sourcePath := filepath.Join(serverDir, filePath)
+		sourcePath := filepath.Join(node.WorkPath, serverDir, filePath)
 		fileName := filepath.Base(filePath)
 		destinationPath := filepath.Join(destinationBase, fileName)
 
@@ -199,7 +199,7 @@ func (h *Handler) processItems(
 			return api.WrapHTTPError(err, http.StatusBadRequest)
 		}
 
-		sourcePath := filepath.Join(serverDir, dirPath)
+		sourcePath := filepath.Join(node.WorkPath, serverDir, dirPath)
 		dirName := filepath.Base(dirPath)
 		destinationPath := filepath.Join(destinationBase, dirName)
 

@@ -118,8 +118,6 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fullPath := filepath.Join(server.Dir, path)
-
 	nodes, err := h.nodeRepo.Find(ctx, &filters.FindNode{
 		IDs: []uint{server.DSID},
 	}, nil, &filters.Pagination{
@@ -138,6 +136,8 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	node := &nodes[0]
+
+	fullPath := filepath.Join(node.WorkPath, server.Dir, path)
 
 	fileInfoList, err := h.daemonFiles.ReadDir(ctx, node, fullPath)
 	if err != nil {

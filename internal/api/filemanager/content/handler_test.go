@@ -64,7 +64,7 @@ var testNode = domain.Node{
 	GdaemonHost:         "127.0.0.1",
 	GdaemonPort:         31717,
 	GdaemonAPIKey:       "test-key",
-	WorkPath:            "/var/gameap",
+	WorkPath:            "/srv/gameap",
 	GdaemonServerCert:   "test-cert",
 	ClientCertificateID: 1,
 }
@@ -132,7 +132,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -223,7 +223,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -302,7 +302,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -375,7 +375,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -447,7 +447,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -558,7 +558,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27016,
-					Dir:           "/home/gameap/servers/test2",
+					Dir:           "servers/test2",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -610,7 +610,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27016,
-					Dir:           "/home/gameap/servers/test2",
+					Dir:           "servers/test2",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -679,7 +679,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -732,7 +732,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -783,7 +783,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -835,7 +835,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -1005,6 +1005,129 @@ func TestCalculateVisibility(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			visibility := calculateVisibility(tt.perm)
 			assert.Equal(t, tt.wantVisibility, visibility)
+		})
+	}
+}
+
+func TestHandler_FullPathConstruction(t *testing.T) {
+	tests := []struct {
+		name             string
+		nodeWorkPath     string
+		serverDir        string
+		requestPath      string
+		expectedFullPath string
+	}{
+		{
+			name:             "constructs_absolute_path_with_node_workpath",
+			nodeWorkPath:     "/srv/gameap",
+			serverDir:        "servers/test1",
+			requestPath:      "",
+			expectedFullPath: "/srv/gameap/servers/test1",
+		},
+		{
+			name:             "constructs_absolute_path_with_subdirectory",
+			nodeWorkPath:     "/srv/gameap",
+			serverDir:        "servers/test1",
+			requestPath:      "logs",
+			expectedFullPath: "/srv/gameap/servers/test1/logs",
+		},
+		{
+			name:             "constructs_absolute_path_with_nested_subdirectory",
+			nodeWorkPath:     "/srv/gameap",
+			serverDir:        "servers/test1",
+			requestPath:      "logs/archive/2024",
+			expectedFullPath: "/srv/gameap/servers/test1/logs/archive/2024",
+		},
+		{
+			name:             "constructs_path_with_different_workpath",
+			nodeWorkPath:     "/opt/servers",
+			serverDir:        "cs/server1",
+			requestPath:      "cfg",
+			expectedFullPath: "/opt/servers/cs/server1/cfg",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			serverRepo := inmemory.NewServerRepository()
+			nodeRepo := inmemory.NewNodeRepository()
+			rbacRepo := inmemory.NewRBACRepository()
+			rbacService := rbac.NewRBAC(services.NewNilTransactionManager(), rbacRepo, 0)
+			responder := api.NewResponder()
+
+			var capturedPath string
+			fileService := &mockFileService{
+				readDirFunc: func(_ context.Context, _ *domain.Node, directory string) ([]*daemon.FileInfo, error) {
+					capturedPath = directory
+
+					return []*daemon.FileInfo{}, nil
+				},
+			}
+
+			handler := NewHandler(serverRepo, nodeRepo, rbacService, fileService, responder)
+
+			now := time.Now()
+			server := &domain.Server{
+				ID:            1,
+				UUID:          uuid.MustParse("11111111-1111-1111-1111-111111111111"),
+				UUIDShort:     "short1",
+				Enabled:       true,
+				Installed:     1,
+				Blocked:       false,
+				Name:          "Test Server",
+				GameID:        "cs",
+				DSID:          1,
+				GameModID:     1,
+				ServerIP:      "127.0.0.1",
+				ServerPort:    27015,
+				Dir:           tt.serverDir,
+				ProcessActive: false,
+				CreatedAt:     &now,
+				UpdatedAt:     &now,
+			}
+			require.NoError(t, serverRepo.Save(context.Background(), server))
+			serverRepo.AddUserServer(1, 1)
+			allowUserFilesAbility(t, rbacRepo, 1, 1)
+
+			node := domain.Node{
+				ID:                  1,
+				Enabled:             true,
+				Name:                "Test Node",
+				OS:                  "linux",
+				Location:            "Test Location",
+				GdaemonHost:         "127.0.0.1",
+				GdaemonPort:         31717,
+				GdaemonAPIKey:       "test-key",
+				WorkPath:            tt.nodeWorkPath,
+				GdaemonServerCert:   "test-cert",
+				ClientCertificateID: 1,
+			}
+			require.NoError(t, nodeRepo.Save(context.Background(), &node))
+
+			session := &auth.Session{
+				Login: "testuser",
+				Email: "test@example.com",
+				User:  &testUser1,
+			}
+			ctx := auth.ContextWithSession(context.Background(), session)
+
+			baseURL := "/api/file-manager/1/content"
+			query := url.Values{}
+			query.Add("disk", "server")
+			if tt.requestPath != "" {
+				query.Add("path", tt.requestPath)
+			}
+			fullURL := baseURL + "?" + query.Encode()
+
+			req := httptest.NewRequest(http.MethodGet, fullURL, nil)
+			req = req.WithContext(ctx)
+			req = mux.SetURLVars(req, map[string]string{"server": "1"})
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			assert.Equal(t, http.StatusOK, w.Code)
+			assert.Equal(t, tt.expectedFullPath, capturedPath)
 		})
 	}
 }

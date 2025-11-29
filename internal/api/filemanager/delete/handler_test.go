@@ -63,7 +63,7 @@ var testNode = domain.Node{
 	GdaemonHost:         "127.0.0.1",
 	GdaemonPort:         31717,
 	GdaemonAPIKey:       "test-key",
-	WorkPath:            "/var/gameap",
+	WorkPath:            "/srv/gameap",
 	GdaemonServerCert:   "test-cert",
 	ClientCertificateID: 1,
 }
@@ -135,7 +135,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -151,7 +151,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupFileService: func() *mockFileService {
 				return &mockFileService{
 					removeFunc: func(_ context.Context, _ *domain.Node, path string, recursive bool) error {
-						assert.Equal(t, "/home/gameap/servers/test1/test.txt", path)
+						assert.Equal(t, "/srv/gameap/servers/test1/test.txt", path)
 						assert.False(t, recursive)
 
 						return nil
@@ -206,7 +206,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -222,7 +222,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupFileService: func() *mockFileService {
 				return &mockFileService{
 					removeFunc: func(_ context.Context, _ *domain.Node, path string, recursive bool) error {
-						assert.Equal(t, "/home/gameap/servers/test1/logs", path)
+						assert.Equal(t, "/srv/gameap/servers/test1/logs", path)
 						assert.True(t, recursive)
 
 						return nil
@@ -279,7 +279,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -298,9 +298,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					path      string
 					recursive bool
 				}{
-					{path: "/home/gameap/servers/test1/file1.txt", recursive: false},
-					{path: "/home/gameap/servers/test1/file2.txt", recursive: false},
-					{path: "/home/gameap/servers/test1/backup", recursive: true},
+					{path: "/srv/gameap/servers/test1/file1.txt", recursive: false},
+					{path: "/srv/gameap/servers/test1/file2.txt", recursive: false},
+					{path: "/srv/gameap/servers/test1/backup", recursive: true},
 				}
 
 				return &mockFileService{
@@ -361,7 +361,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -413,7 +413,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -540,7 +540,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27016,
-					Dir:           "/home/gameap/servers/test2",
+					Dir:           "servers/test2",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -596,7 +596,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27016,
-					Dir:           "/home/gameap/servers/test2",
+					Dir:           "servers/test2",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -669,7 +669,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -726,7 +726,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -776,7 +776,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -830,7 +830,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -886,7 +886,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,

@@ -138,14 +138,14 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fullPath := filepath.Join(server.Dir, path)
-
 	node, err := h.getNode(ctx, server.DSID)
 	if err != nil {
 		h.responder.WriteError(ctx, rw, err)
 
 		return
 	}
+
+	fullPath := filepath.Join(node.WorkPath, server.Dir, path)
 
 	fileStream, err := h.daemonFiles.DownloadStream(ctx, node, fullPath)
 	if err != nil {

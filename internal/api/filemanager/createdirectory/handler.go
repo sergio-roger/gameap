@@ -157,7 +157,7 @@ func (h *Handler) createDirectory(
 	}
 
 	relativePath := filepath.Join(req.Path, req.Name)
-	fullPath := filepath.Join(serverDir, relativePath)
+	fullPath := filepath.Join(node.WorkPath, serverDir, relativePath)
 
 	err := h.daemonFiles.MkDir(ctx, node, fullPath)
 	if err != nil {

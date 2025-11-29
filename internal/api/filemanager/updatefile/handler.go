@@ -3,6 +3,7 @@ package updatefile
 import (
 	"context"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -208,13 +209,22 @@ func (h *Handler) updateFile(
 	fileHeader *multipart.FileHeader,
 ) (updateFileResponse, error) {
 	relativePath := filepath.Join(targetPath, fileHeader.Filename)
-	fullPath := filepath.Join(serverDir, relativePath)
+	fullPath := filepath.Join(node.WorkPath, serverDir, relativePath)
 
 	file, err := fileHeader.Open()
 	if err != nil {
 		return updateFileResponse{}, errors.WithMessage(err, "failed to open uploaded file")
 	}
-	defer file.Close()
+	defer func(file multipart.File) {
+		err := file.Close()
+		if err != nil {
+			slog.Warn(
+				"failed to close uploaded file",
+				slog.String("error", err.Error()),
+				slog.String("path", fullPath),
+			)
+		}
+	}(file)
 
 	fileSize := uint64(fileHeader.Size)
 	if fileHeader.Size < 0 {

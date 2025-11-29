@@ -177,8 +177,8 @@ func (h *Handler) renameItem(
 		return api.WrapHTTPError(err, http.StatusBadRequest)
 	}
 
-	oldPath := filepath.Join(serverDir, req.OldName)
-	newPath := filepath.Join(serverDir, req.NewName)
+	oldPath := filepath.Join(node.WorkPath, serverDir, req.OldName)
+	newPath := filepath.Join(node.WorkPath, serverDir, req.NewName)
 
 	err := h.daemonFiles.Move(ctx, node, oldPath, newPath)
 	if err != nil {

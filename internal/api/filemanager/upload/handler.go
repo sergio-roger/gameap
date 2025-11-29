@@ -215,7 +215,7 @@ func (h *Handler) processFiles(
 			return api.WrapHTTPError(err, http.StatusBadRequest)
 		}
 
-		fullPath := filepath.Join(serverDir, targetPath, fileHeader.Filename)
+		fullPath := filepath.Join(node.WorkPath, serverDir, targetPath, fileHeader.Filename)
 
 		file, err := fileHeader.Open()
 		if err != nil {

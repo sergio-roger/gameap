@@ -158,7 +158,7 @@ func (h *Handler) createFile(
 	}
 
 	relativePath := filepath.Join(req.Path, req.Name)
-	fullPath := filepath.Join(serverDir, relativePath)
+	fullPath := filepath.Join(node.WorkPath, serverDir, relativePath)
 
 	err := h.daemonFiles.Upload(ctx, node, fullPath, []byte{}, 0o644)
 	if err != nil {

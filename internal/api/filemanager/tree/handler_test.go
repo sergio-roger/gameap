@@ -64,7 +64,7 @@ var testNode = domain.Node{
 	GdaemonHost:         "127.0.0.1",
 	GdaemonPort:         31717,
 	GdaemonAPIKey:       "test-key",
-	WorkPath:            "/var/gameap",
+	WorkPath:            "/srv/gameap",
 	GdaemonServerCert:   "test-cert",
 	ClientCertificateID: 1,
 }
@@ -132,7 +132,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -148,7 +148,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupFileService: func() *mockFileService {
 				return &mockFileService{
 					readDirFunc: func(_ context.Context, _ *domain.Node, directory string) ([]*daemon.FileInfo, error) {
-						if directory == "/home/gameap/servers/test1" {
+						if directory == "/srv/gameap/servers/test1" {
 							return []*daemon.FileInfo{
 								{
 									Name:         "logs",
@@ -174,7 +174,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 							}, nil
 						}
 
-						if directory == "/home/gameap/servers/test1/logs" {
+						if directory == "/srv/gameap/servers/test1/logs" {
 							return []*daemon.FileInfo{
 								{
 									Name:         "latest.log",
@@ -186,7 +186,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 							}, nil
 						}
 
-						if directory == "/home/gameap/servers/test1/config" {
+						if directory == "/srv/gameap/servers/test1/config" {
 							return []*daemon.FileInfo{
 								{
 									Name:         "subdir",
@@ -261,7 +261,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -277,7 +277,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			setupFileService: func() *mockFileService {
 				return &mockFileService{
 					readDirFunc: func(_ context.Context, _ *domain.Node, directory string) ([]*daemon.FileInfo, error) {
-						if directory == "/home/gameap/servers/test1/data" {
+						if directory == "/srv/gameap/servers/test1/data" {
 							return []*daemon.FileInfo{
 								{
 									Name:         "subfolder",
@@ -289,7 +289,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 							}, nil
 						}
 
-						if directory == "/home/gameap/servers/test1/data/subfolder" {
+						if directory == "/srv/gameap/servers/test1/data/subfolder" {
 							return []*daemon.FileInfo{
 								{
 									Name:         "nested",
@@ -352,7 +352,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -424,7 +424,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -529,7 +529,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27016,
-					Dir:           "/home/gameap/servers/test2",
+					Dir:           "servers/test2",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -581,7 +581,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27016,
-					Dir:           "/home/gameap/servers/test2",
+					Dir:           "servers/test2",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -650,7 +650,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -703,7 +703,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -753,7 +753,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,
@@ -802,7 +802,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					GameModID:     1,
 					ServerIP:      "127.0.0.1",
 					ServerPort:    27015,
-					Dir:           "/home/gameap/servers/test1",
+					Dir:           "servers/test1",
 					ProcessActive: false,
 					CreatedAt:     &now,
 					UpdatedAt:     &now,

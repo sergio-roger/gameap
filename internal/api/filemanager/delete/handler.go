@@ -165,7 +165,7 @@ func (h *Handler) processItems(
 			return api.WrapHTTPError(err, http.StatusBadRequest)
 		}
 
-		fullPath := filepath.Join(serverDir, item.Path)
+		fullPath := filepath.Join(node.WorkPath, serverDir, item.Path)
 		recursive := item.Type == "dir"
 
 		err := h.daemonFiles.Remove(ctx, node, fullPath, recursive)
