@@ -608,69 +608,6 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			wantError:      "Service Unavailable",
 			expectMessage:  false,
 		},
-		{
-			name:     "invalid_player_object_missing_id",
-			serverID: "1",
-			requestBody: map[string]any{
-				"player": map[string]any{
-					"name": "hakan",
-				},
-				"reason": "test",
-			},
-			setupAuth: func() context.Context {
-				session := &auth.Session{
-					Login: "testuser",
-					Email: "test@example.com",
-					User:  &testUser1,
-				}
-
-				return auth.ContextWithSession(context.Background(), session)
-			},
-			setupRepo: func(
-				serverRepo *inmemory.ServerRepository,
-				gameRepo *inmemory.GameRepository,
-				rbacRepo *inmemory.RBACRepository,
-			) {
-				now := time.Now()
-				lastCheck := time.Now()
-				rconPassword := testRconPassword
-
-				server := &domain.Server{
-					ID:               1,
-					UUID:             uuid.MustParse("11111111-1111-1111-1111-111111111111"),
-					UUIDShort:        "short1",
-					Enabled:          true,
-					Installed:        1,
-					Blocked:          false,
-					Name:             "Test Server 1",
-					GameID:           "cs",
-					DSID:             1,
-					GameModID:        1,
-					ServerIP:         "127.0.0.1",
-					ServerPort:       27015,
-					Rcon:             &rconPassword,
-					ProcessActive:    true,
-					LastProcessCheck: &lastCheck,
-					CreatedAt:        &now,
-					UpdatedAt:        &now,
-				}
-
-				game := &domain.Game{
-					Code:   "cs",
-					Name:   "Counter-Strike",
-					Engine: "goldsource",
-				}
-
-				require.NoError(t, serverRepo.Save(context.Background(), server))
-				serverRepo.AddUserServer(1, 1)
-
-				allowUserAbilityForServer(t, rbacRepo, testUser1.ID, 1, domain.AbilityNameGameServerRconPlayers)
-				require.NoError(t, gameRepo.Save(context.Background(), game))
-			},
-			expectedStatus: http.StatusBadRequest,
-			wantError:      "player id is required",
-			expectMessage:  false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -852,14 +789,6 @@ func TestKickRequest_ToPlayer(t *testing.T) {
 				assert.Equal(t, "31.223.13.178", player.Addr)
 				assert.Equal(t, "4841", player.UniqID)
 			},
-		},
-		{
-			name: "player_object_missing_id",
-			request: kickRequest{
-				Player: json.RawMessage(`{"name":"hakan"}`),
-			},
-			wantErr:  true,
-			errorMsg: "player id is required",
 		},
 		{
 			name: "player_object_with_uniqid",

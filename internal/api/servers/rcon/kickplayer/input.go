@@ -54,10 +54,6 @@ func (r *kickRequest) ToPlayer() (players.Player, error) {
 		UniqID: playerObj.UniqID,
 	}
 
-	if player.ID == "" {
-		return players.Player{}, errors.New("player id is required")
-	}
-
 	if player.UniqID == "" {
 		player.UniqID = player.ID
 	}

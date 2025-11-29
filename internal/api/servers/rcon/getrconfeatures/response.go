@@ -1,7 +1,7 @@
 package getrconfeatures
 
 import (
-	"strings"
+	"github.com/gameap/gameap/pkg/quercon/rcon"
 )
 
 type featuresResponse struct {
@@ -9,13 +9,9 @@ type featuresResponse struct {
 	PlayersManage bool `json:"playersManage"`
 }
 
-func newFeaturesResponse(engine string) featuresResponse {
+func newFeaturesResponse(gameCode string, engine string) featuresResponse {
 	return featuresResponse{
-		Rcon:          true,
-		PlayersManage: isGoldSourceEngine(engine),
+		Rcon:          rcon.IsProtocolSupported(rcon.Protocol(engine)),
+		PlayersManage: rcon.IsPlayerManagementSupported(gameCode),
 	}
-}
-
-func isGoldSourceEngine(engine string) bool {
-	return strings.ToLower(engine) == "goldsource"
 }

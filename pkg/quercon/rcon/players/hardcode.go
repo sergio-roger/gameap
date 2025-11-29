@@ -7,13 +7,14 @@ var (
 )
 
 var mapPlayerManagersByGameCode = map[string]func() PlayerManager{
-	"cs":      NewValvePlayers,
-	"cstrike": NewValvePlayers,
-	"tfc":     NewValvePlayers,
-	"dod":     NewValvePlayers,
-	"gearbox": NewValvePlayers,
-	"hl":      NewValvePlayers,
-	"valve":   NewValvePlayers,
+	"cs":        NewValvePlayers,
+	"cstrike":   NewValvePlayers,
+	"tfc":       NewValvePlayers,
+	"dod":       NewValvePlayers,
+	"gearbox":   NewValvePlayers,
+	"hl":        NewValvePlayers,
+	"valve":     NewValvePlayers,
+	"minecraft": NewMinecraftPlayers,
 }
 
 func NewPlayerManagerByGameCode(gameCode string) (PlayerManager, error) {
@@ -22,4 +23,10 @@ func NewPlayerManagerByGameCode(gameCode string) (PlayerManager, error) {
 	}
 
 	return nil, ErrPlayersManagementNotSupported
+}
+
+func IsPlayerManagementSupported(gameCode string) bool {
+	_, ok := mapPlayerManagersByGameCode[gameCode]
+
+	return ok
 }

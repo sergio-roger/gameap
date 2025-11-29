@@ -1,6 +1,14 @@
 package players
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrPlayerNameRequired   = errors.New("player name is required")
+	ErrPlayerUniqIDRequired = errors.New("player unique ID is required")
+)
 
 type Player struct {
 	ID    string
@@ -13,6 +21,22 @@ type Player struct {
 	UniqID string
 }
 
+func (p Player) ValidateName() error {
+	if p.Name == "" {
+		return ErrPlayerNameRequired
+	}
+
+	return nil
+}
+
+func (p Player) ValidateUniqID() error {
+	if p.UniqID == "" {
+		return ErrPlayerUniqIDRequired
+	}
+
+	return nil
+}
+
 type PlayerManager interface {
 	// ParsePlayers takes the raw response from the server and parses it into a slice of Player structs.
 	ParsePlayers(data string) ([]Player, error)
@@ -21,8 +45,8 @@ type PlayerManager interface {
 	PlayersCommand() string
 
 	// KickCommand returns the command string to kick a player with the given reason.
-	KickCommand(player Player, reason string) string
+	KickCommand(player Player, reason string) (string, error)
 
 	// BanCommand returns the command string to ban a player with the given reason.
-	BanCommand(player Player, reason string, time time.Duration) string
+	BanCommand(player Player, reason string, time time.Duration) (string, error)
 }

@@ -94,6 +94,7 @@
       NTable,
       NModal,
     } from "naive-ui"
+    import {errorNotification, notification} from "@/parts/dialogs";
 
     export default {
         name: "RconPlayers",
@@ -215,13 +216,11 @@
                 }).then(() => {
                     this.hideModal();
 
-                    gameap.alert(this.trans('rcon.ban_msg_success'))
+                    notification(this.trans('rcon.ban_msg_success'))
                 }).catch((e) => {
                     this.hideModal();
 
-                    _.has(e, 'response.data.message')
-                        ? gameap.alert(e.response.data.message)
-                        : gameap.alert(e);
+                    errorNotification(e);
                 });
             },
             kick() {
@@ -231,13 +230,11 @@
                 }).then(() => {
                     this.hideModal();
 
-                    gameap.alert(this.trans('rcon.kick_msg_success'))
+                  notification(this.trans('rcon.kick_msg_success'))
                 }).catch((e) => {
                     this.hideModal();
 
-                    _.has(e, 'response.data.message')
-                        ? gameap.alert(e.response.data.message)
-                        : gameap.alert(e);
+                  errorNotification(e);
                 });
             },
             sendMessage() {
@@ -247,13 +244,11 @@
                 }).then(() => {
                     this.hideModal();
 
-                    gameap.alert(this.trans('rcon.message_msg_success'))
+                    notification(this.trans('rcon.message_msg_success'))
                 }).catch((e) => {
                     this.hideModal();
 
-                    _.has(e, 'response.data.message')
-                        ? gameap.alert(e.response.data.message)
-                        : gameap.alert(e);
+                    errorNotification(e);
                 });
             }
         },
@@ -272,13 +267,13 @@
                 }
             },
             ipRow() {
-                return _.has(_.head(this.players), 'ip');
+                return _.some(this.players, player => !_.isEmpty(player.ip));
             },
             pingRow() {
-                return _.has(_.head(this.players), 'ping');
+                return _.some(this.players, player => !_.isEmpty(player.ping));
             },
             scoreRow() {
-                return _.has(_.head(this.players), 'score');
+                return _.some(this.players, player => !_.isEmpty(player.score));
             }
         },
         mounted() {

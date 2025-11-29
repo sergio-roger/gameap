@@ -144,7 +144,11 @@ func (mgr *ValvePlayerManager) PlayersCommand() string {
 	return "status"
 }
 
-func (mgr *ValvePlayerManager) KickCommand(player Player, reason string) string {
+func (mgr *ValvePlayerManager) KickCommand(player Player, reason string) (string, error) {
+	if err := player.ValidateUniqID(); err != nil {
+		return "", err
+	}
+
 	sb := strings.Builder{}
 	sb.Grow(64)
 
@@ -156,10 +160,14 @@ func (mgr *ValvePlayerManager) KickCommand(player Player, reason string) string 
 		sb.WriteString(reason)
 	}
 
-	return sb.String()
+	return sb.String(), nil
 }
 
-func (mgr *ValvePlayerManager) BanCommand(player Player, reason string, time time.Duration) string {
+func (mgr *ValvePlayerManager) BanCommand(player Player, reason string, time time.Duration) (string, error) {
+	if err := player.ValidateUniqID(); err != nil {
+		return "", err
+	}
+
 	sb := strings.Builder{}
 	sb.Grow(64)
 
@@ -176,5 +184,5 @@ func (mgr *ValvePlayerManager) BanCommand(player Player, reason string, time tim
 		sb.WriteString(reason)
 	}
 
-	return sb.String()
+	return sb.String(), nil
 }

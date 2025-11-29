@@ -180,6 +180,13 @@ func (h *Handler) getPlayers(
 	}
 
 	if err := client.Open(ctx); err != nil {
+		if errors.Is(err, rcon.ErrAuthenticationFailed) {
+			return nil, api.WrapHTTPError(
+				errors.WithMessage(err, "rcon authentication failed"),
+				http.StatusUnprocessableEntity,
+			)
+		}
+
 		return nil, api.WrapHTTPError(
 			errors.WithMessage(err, "failed to connect to rcon"),
 			http.StatusServiceUnavailable,

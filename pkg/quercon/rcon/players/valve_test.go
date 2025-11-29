@@ -2,6 +2,7 @@ package players
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -303,6 +304,126 @@ func TestValvePlayerManager_parsePlayer(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestValvePlayerManager_KickCommand(t *testing.T) {
+	tests := []struct {
+		name        string
+		player      Player
+		reason      string
+		expected    string
+		expectedErr error
+	}{
+		{
+			name:     "kick_with_reason",
+			player:   Player{UniqID: "STEAM_0:0:12345678"},
+			reason:   "cheating",
+			expected: "kick #STEAM_0:0:12345678 cheating",
+		},
+		{
+			name:     "kick_without_reason",
+			player:   Player{UniqID: "STEAM_0:1:87654321"},
+			reason:   "",
+			expected: "kick #STEAM_0:1:87654321",
+		},
+		{
+			name:     "kick_bot",
+			player:   Player{UniqID: "BOT"},
+			reason:   "making room",
+			expected: "kick #BOT making room",
+		},
+		{
+			name:        "kick_with_empty_uniq_id",
+			player:      Player{UniqID: ""},
+			reason:      "reason",
+			expected:    "",
+			expectedErr: ErrPlayerUniqIDRequired,
+		},
+		{
+			name:        "kick_with_only_name_no_uniq_id",
+			player:      Player{Name: "PlayerName"},
+			reason:      "reason",
+			expected:    "",
+			expectedErr: ErrPlayerUniqIDRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mgr := NewValvePlayers()
+			result, err := mgr.KickCommand(tt.player, tt.reason)
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+				assert.Empty(t, result)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
+		})
+	}
+}
+
+func TestValvePlayerManager_BanCommand(t *testing.T) {
+	tests := []struct {
+		name        string
+		player      Player
+		reason      string
+		duration    time.Duration
+		expected    string
+		expectedErr error
+	}{
+		{
+			name:     "ban_with_reason",
+			player:   Player{UniqID: "STEAM_0:0:12345678"},
+			reason:   "hacking",
+			duration: 24 * time.Hour,
+			expected: "banid 86400 #STEAM_0:0:12345678 hacking",
+		},
+		{
+			name:     "ban_without_reason",
+			player:   Player{UniqID: "STEAM_0:1:87654321"},
+			reason:   "",
+			duration: time.Hour,
+			expected: "banid 3600 #STEAM_0:1:87654321",
+		},
+		{
+			name:     "ban_permanent",
+			player:   Player{UniqID: "STEAM_0:0:11111111"},
+			reason:   "permanent ban",
+			duration: 0,
+			expected: "banid 0 #STEAM_0:0:11111111 permanent ban",
+		},
+		{
+			name:        "ban_with_empty_uniq_id",
+			player:      Player{UniqID: ""},
+			reason:      "reason",
+			duration:    time.Hour,
+			expected:    "",
+			expectedErr: ErrPlayerUniqIDRequired,
+		},
+		{
+			name:        "ban_with_only_name_no_uniq_id",
+			player:      Player{Name: "PlayerName"},
+			reason:      "reason",
+			duration:    time.Hour,
+			expected:    "",
+			expectedErr: ErrPlayerUniqIDRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mgr := NewValvePlayers()
+			result, err := mgr.BanCommand(tt.player, tt.reason, tt.duration)
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+				assert.Empty(t, result)
+			} else {
+				assert.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
 			}
 		})

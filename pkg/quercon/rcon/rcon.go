@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/gameap/gameap/pkg/quercon/rcon/players"
 	"github.com/pkg/errors"
 )
 
@@ -51,4 +52,17 @@ func NewClient(config Config) (Client, error) {
 	}
 
 	return nil, ErrUnsupportedProtocol
+}
+
+func IsProtocolSupported(protocol Protocol) bool {
+	switch protocol {
+	case ProtocolGoldSrc, ProtocolSource:
+		return true
+	default:
+		return false
+	}
+}
+
+func IsPlayerManagementSupported(gameCode string) bool {
+	return players.IsPlayerManagementSupported(gameCode)
 }

@@ -211,12 +211,27 @@ func (h *Handler) executeRconCommand(
 	}
 
 	if err := client.Open(ctx); err != nil {
+		if errors.Is(err, rcon.ErrAuthenticationFailed) {
+			return "", api.WrapHTTPError(
+				errors.WithMessage(err, "rcon authentication failed"),
+				http.StatusUnprocessableEntity,
+			)
+		}
+
 		return "", api.WrapHTTPError(
 			errors.WithMessage(err, "failed to connect to rcon"),
 			http.StatusServiceUnavailable,
 		)
 	}
-	defer client.Close()
+	defer func(client rcon.Client) {
+		err := client.Close()
+		if err != nil {
+			slog.Warn(
+				"failed to close rcon client",
+				slog.String("error", err.Error()),
+			)
+		}
+	}(client)
 
 	output, err := client.Execute(ctx, command)
 	if err != nil {

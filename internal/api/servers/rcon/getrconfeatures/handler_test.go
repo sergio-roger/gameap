@@ -168,7 +168,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			expectedPlayersManage: false,
 		},
 		{
-			name:     "successful_features_retrieval__minecraft_engine",
+			name:     "successful_features_retrieval__unsupported_engine",
 			serverID: "3",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -214,11 +214,11 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			},
 			expectedStatus:        http.StatusOK,
 			expectFeatures:        true,
-			expectedRcon:          true,
+			expectedRcon:          false,
 			expectedPlayersManage: false,
 		},
 		{
-			name:     "successful_features_retrieval__case_insensitive_GoldSource",
+			name:     "successful_features_retrieval__hl_game",
 			serverID: "4",
 			setupAuth: func() context.Context {
 				session := &auth.Session{
@@ -233,9 +233,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 				now := time.Now()
 
 				game := &domain.Game{
-					Code:   "hldm",
-					Name:   "Half-Life Deathmatch",
-					Engine: "GoldSource",
+					Code:   "hl",
+					Name:   "Half-Life",
+					Engine: "goldsource",
 				}
 				require.NoError(t, gameRepo.Save(context.Background(), game))
 
@@ -247,7 +247,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					Installed:  1,
 					Blocked:    false,
 					Name:       "Test HL Server",
-					GameID:     "hldm",
+					GameID:     "hl",
 					DSID:       1,
 					GameModID:  1,
 					ServerIP:   "127.0.0.1",
@@ -519,110 +519,88 @@ func TestHandler_NewHandler(t *testing.T) {
 func TestNewFeaturesResponse(t *testing.T) {
 	tests := []struct {
 		name                  string
+		gameCode              string
 		engine                string
 		expectedRcon          bool
 		expectedPlayersManage bool
 	}{
 		{
-			name:                  "goldsource_engine_lowercase",
+			name:                  "goldsource_engine_with_cs_game",
+			gameCode:              "cs",
 			engine:                "goldsource",
 			expectedRcon:          true,
 			expectedPlayersManage: true,
 		},
 		{
-			name:                  "goldsource_engine_uppercase",
-			engine:                "GoldSource",
+			name:                  "goldsource_engine_with_hl_game",
+			gameCode:              "hl",
+			engine:                "goldsource",
 			expectedRcon:          true,
 			expectedPlayersManage: true,
 		},
 		{
-			name:                  "goldsource_engine_mixed_case",
-			engine:                "GOLDSOURCE",
+			name:                  "goldsource_engine_with_tfc_game",
+			gameCode:              "tfc",
+			engine:                "goldsource",
 			expectedRcon:          true,
 			expectedPlayersManage: true,
 		},
 		{
-			name:                  "source_engine",
+			name:                  "goldsource_engine_with_unsupported_game",
+			gameCode:              "unknown_game",
+			engine:                "goldsource",
+			expectedRcon:          true,
+			expectedPlayersManage: false,
+		},
+		{
+			name:                  "source_engine_with_unsupported_game",
+			gameCode:              "csgo",
 			engine:                "source",
 			expectedRcon:          true,
 			expectedPlayersManage: false,
 		},
 		{
-			name:                  "minecraft_engine",
+			name:                  "unsupported_engine_with_supported_game",
+			gameCode:              "cs",
 			engine:                "minecraft",
-			expectedRcon:          true,
+			expectedRcon:          false,
+			expectedPlayersManage: true,
+		},
+		{
+			name:                  "unsupported_engine_with_unsupported_game",
+			gameCode:              "minecraft",
+			engine:                "minecraft",
+			expectedRcon:          false,
 			expectedPlayersManage: false,
 		},
 		{
-			name:                  "unknown_engine",
-			engine:                "unknown",
-			expectedRcon:          true,
-			expectedPlayersManage: false,
-		},
-		{
-			name:                  "empty_engine",
+			name:                  "empty_engine_and_game",
+			gameCode:              "",
 			engine:                "",
-			expectedRcon:          true,
+			expectedRcon:          false,
 			expectedPlayersManage: false,
+		},
+		{
+			name:                  "cstrike_game_code",
+			gameCode:              "cstrike",
+			engine:                "goldsource",
+			expectedRcon:          true,
+			expectedPlayersManage: true,
+		},
+		{
+			name:                  "valve_game_code",
+			gameCode:              "valve",
+			engine:                "goldsource",
+			expectedRcon:          true,
+			expectedPlayersManage: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			response := newFeaturesResponse(tt.engine)
+			response := newFeaturesResponse(tt.gameCode, tt.engine)
 			assert.Equal(t, tt.expectedRcon, response.Rcon)
 			assert.Equal(t, tt.expectedPlayersManage, response.PlayersManage)
-		})
-	}
-}
-
-func TestIsGoldSourceEngine(t *testing.T) {
-	tests := []struct {
-		name   string
-		engine string
-		want   bool
-	}{
-		{
-			name:   "goldsource_lowercase",
-			engine: "goldsource",
-			want:   true,
-		},
-		{
-			name:   "goldsource_uppercase",
-			engine: "GOLDSOURCE",
-			want:   true,
-		},
-		{
-			name:   "goldsource_mixed_case",
-			engine: "GoldSource",
-			want:   true,
-		},
-		{
-			name:   "source_engine",
-			engine: "source",
-			want:   false,
-		},
-		{
-			name:   "minecraft",
-			engine: "minecraft",
-			want:   false,
-		},
-		{
-			name:   "empty_string",
-			engine: "",
-			want:   false,
-		},
-		{
-			name:   "partial_match",
-			engine: "gold",
-			want:   false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := isGoldSourceEngine(tt.engine)
-			assert.Equal(t, tt.want, result)
 		})
 	}
 }

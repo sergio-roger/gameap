@@ -13,6 +13,8 @@ func DetermineProtocolByEngine(engine string) (rcon.Protocol, error) {
 		return rcon.ProtocolGoldSrc, nil
 	case "source":
 		return rcon.ProtocolSource, nil
+	case "minecraft":
+		return rcon.ProtocolSource, nil
 	default:
 		return "", errors.Errorf("unsupported engine: %s", engine)
 	}

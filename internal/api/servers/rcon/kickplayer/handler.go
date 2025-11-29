@@ -167,13 +167,21 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	var rconCommand string
 	if command == "kick" {
-		rconCommand = playerManager.KickCommand(player, kickInput.Reason)
+		rconCommand, err = playerManager.KickCommand(player, kickInput.Reason)
 	} else {
-		rconCommand = playerManager.BanCommand(
+		rconCommand, err = playerManager.BanCommand(
 			player,
 			kickInput.Reason,
 			time.Duration(int64(kickInput.DurationInMinutes.Int())*int64(time.Minute)),
 		)
+	}
+	if err != nil {
+		h.responder.WriteError(ctx, rw, api.WrapHTTPError(
+			errors.WithMessage(err, "failed to build command"),
+			http.StatusBadRequest,
+		))
+
+		return
 	}
 
 	slog.DebugContext(
@@ -268,6 +276,13 @@ func (h *Handler) executeRconCommand(
 	}
 
 	if err := client.Open(ctx); err != nil {
+		if errors.Is(err, rcon.ErrAuthenticationFailed) {
+			return "", api.WrapHTTPError(
+				errors.WithMessage(err, "rcon authentication failed"),
+				http.StatusUnprocessableEntity,
+			)
+		}
+
 		return "", api.WrapHTTPError(
 			errors.WithMessage(err, "failed to connect to rcon"),
 			http.StatusServiceUnavailable,
