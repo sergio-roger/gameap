@@ -70,7 +70,7 @@
   watch(nodeIdModel, (val) => {
     store.dispatch('dedicatedServers/setDsId', nodeIdModel.value);
     store.dispatch('dedicatedServers/fetchIpList');
-  });
+  }, { immediate: true });
 
   watch(ipModel, (val) => {
     store.dispatch('servers/setIp', ipModel.value)

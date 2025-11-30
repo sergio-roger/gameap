@@ -21,10 +21,15 @@
                           }"
         >
           <n-form-item :label="trans('labels.name')" path="name">
-            <n-input
-                v-model:value="serverForm.name"
-                type="text"
-            />
+            <n-input-group>
+              <n-input
+                  v-model:value="serverForm.name"
+                  type="text"
+              />
+              <n-button @click="generateRandomName">
+                <i class="fa-solid fa-dice"></i>
+              </n-button>
+            </n-input-group>
           </n-form-item>
 
           <GameModSelector
@@ -115,18 +120,22 @@
 </template>
 
 <script setup>
-import GBreadcrumbs from "../../components/GBreadcrumbs.vue"
-import {computed, onMounted, ref} from "vue"
-import {trans} from "../../i18n/i18n"
-import {useGameListStore} from "../../store/gameList"
-import {useNodeListStore} from "../../store/nodeList"
-import {useServerListStore} from "../../store/serverList"
+import GBreadcrumbs from "@/components/GBreadcrumbs.vue"
+import {computed, onMounted, ref, watch} from "vue"
+import {trans} from "@/i18n/i18n"
+import {useGameListStore} from "@/store/gameList"
+import {useNodeListStore} from "@/store/nodeList"
+import {useServerListStore} from "@/store/serverList"
 import {storeToRefs} from "pinia"
-import {errorNotification, notification} from "../../parts/dialogs"
-import {NForm, NFormItem, NSwitch} from "naive-ui"
-import GButton from "../../components/GButton.vue"
+import {errorNotification, notification} from "@/parts/dialogs"
+import {NForm, NFormItem, NSwitch, NInputGroup} from "naive-ui"
+import {generateServerName} from "@/parts/nameGenerator"
+import GButton from "@/components/GButton.vue"
 import {useRouter} from "vue-router";
-import {requiredValidator} from "../../parts/validators";
+import {requiredValidator} from "@/parts/validators";
+import GameModSelector from "@/components/servers/GameModSelector.vue";
+import SmartPortSelector from "@/components/servers/SmartPortSelector.vue";
+import DsIpSelector from "@/components/servers/DsIpSelector.vue";
 
 const router = useRouter()
 
@@ -188,6 +197,48 @@ const fetchNodes = () => {
   catch((error) => {
     errorNotification(error)
   })
+}
+
+watch(nodesIdName, (newNodes) => {
+  const nodeIds = Object.keys(newNodes)
+  if (nodeIds.length === 1 && !serverForm.value.nodeId) {
+    serverForm.value.nodeId = Number(nodeIds[0])
+  }
+}, { immediate: true })
+
+watch(() => serverForm.value.name, (newName) => {
+  if (!newName || serverForm.value.game) {
+    return
+  }
+
+  const words = newName.toLowerCase().split(/\s+/).filter(w => w.length >= 3)
+  if (words.length === 0) {
+    return
+  }
+
+  const matchedGames = new Set()
+
+  for (const [code, name] of Object.entries(gamesCodeName.value)) {
+    const codeLower = code.toLowerCase()
+    const nameLower = name.toLowerCase()
+
+    for (const word of words) {
+      if (codeLower.includes(word) || word.includes(codeLower) ||
+          nameLower.includes(word) || word.includes(nameLower)) {
+        matchedGames.add(code)
+        break
+      }
+    }
+  }
+
+  if (matchedGames.size === 1) {
+    serverForm.value.game = [...matchedGames][0]
+  }
+})
+
+const generateRandomName = () => {
+  const gameName = gamesCodeName.value[serverForm.value.game] || 'Server'
+  serverForm.value.name = generateServerName(gameName)
 }
 
 const rules = {

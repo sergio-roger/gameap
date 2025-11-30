@@ -44,7 +44,7 @@ import {
   NFormItem,
   NInputNumber
 } from 'naive-ui';
-import { trans } from '../../i18n/i18n';
+import { trans } from '@/i18n/i18n';
 
 const DEFAULT_PORTS = {
   'arma2': 2302,
@@ -182,7 +182,7 @@ watch(queryPort, (newVal) => {
 });
 
 watch(selectedIp, (newIp, oldIp) => {
-  if (oldIp) {
+  if (newIp) {
     setPorts();
   }
 
