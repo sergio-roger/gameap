@@ -1,48 +1,65 @@
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 import axios from '../config/axios'
 
-export const useGameStore = defineStore('game', {
-    state: () => ({
-        loading: false,
-        gameCode: '',
-        game: {},
-        mods: [],
-    }),
-    actions: {
-        setGameCode(gameCode) {
-            this.gameCode = gameCode;
-        },
-        async fetchGame() {
-            this.loading = true
-            try {
-                const response = await axios.get('/api/games/' + this.gameCode)
-                this.game = response.data;
-            } catch (error) {
-                throw error
-            } finally {
-                this.loading = false
-            }
-        },
-        async fetchMods() {
-            this.loading = true
-            try {
-                const response = await axios.get('/api/games/' + this.gameCode + '/mods')
-                this.mods = response.data;
-            } catch (error) {
-                throw error
-            } finally {
-                this.loading = false
-            }
-        },
-        async saveGame(game) {
-            this.loading = true
-            try {
-                await axios.put('/api/games/' + this.gameCode, game)
-            } catch (error) {
-                throw error
-            } finally {
-                this.loading = false
-            }
+export const useGameStore = defineStore('game', () => {
+    // State
+    const apiProcesses = ref(0)
+    const gameCode = ref('')
+    const game = ref({})
+    const mods = ref([])
+
+    // Getters
+    const loading = computed(() => apiProcesses.value > 0)
+
+    // Actions
+    function setGameCode(code) {
+        gameCode.value = code
+    }
+
+    async function fetchGame() {
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/games/' + gameCode.value)
+            game.value = response.data
+        } finally {
+            apiProcesses.value--
         }
-    },
+    }
+
+    async function fetchMods() {
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/games/' + gameCode.value + '/mods')
+            mods.value = response.data
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function saveGame(gameData) {
+        apiProcesses.value++
+        try {
+            await axios.put('/api/games/' + gameCode.value, gameData)
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    return {
+        // State
+        apiProcesses,
+        gameCode,
+        game,
+        mods,
+
+        // Getters
+        loading,
+
+        // Actions
+        setGameCode,
+        fetchGame,
+        fetchMods,
+        saveGame,
+    }
 })

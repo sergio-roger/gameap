@@ -46,7 +46,6 @@ import {alert, confirmAction, confirm} from './parts/dialogs'
 
 import {pluralize, trans, changeLanguage, getCurrentLanguage} from "./i18n/i18n";
 
-import store from './legacy/store'
 import { useAuthStore } from './store/auth'
 
 import GBreadcrumbs from "./components/GBreadcrumbs.vue";
@@ -156,8 +155,6 @@ const naive = create({
 })
 
 const pinia = createPinia()
-
-app.use(store)
 
 app.use(naive)
 

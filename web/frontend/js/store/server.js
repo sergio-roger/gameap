@@ -1,168 +1,202 @@
-// Pinia store. Vuex should be replaced with Pinia in the future.
 import { defineStore } from 'pinia'
-
+import { ref, computed } from 'vue'
 import axios from '../config/axios'
 
-export const useServerStore = defineStore('server', {
-    state: () => ({
-        errors: [],
-        serverId: 0,
-        abilities: {
-            'game-server-common': false,
-            'game-server-start': false,
-            'game-server-stop': false,
-            'game-server-restart': false,
-            'game-server-pause': false,
-            'game-server-update': false,
-            'game-server-files': false,
-            'game-server-tasks': false,
-            'game-server-settings': false,
+export const useServerStore = defineStore('server', () => {
+    // State
+    const errors = ref([])
+    const serverId = ref(0)
+    const abilities = ref({
+        'game-server-common': false,
+        'game-server-start': false,
+        'game-server-stop': false,
+        'game-server-restart': false,
+        'game-server-pause': false,
+        'game-server-update': false,
+        'game-server-files': false,
+        'game-server-tasks': false,
+        'game-server-settings': false,
+        'game-server-console-view': false,
+        'game-server-console-send': false,
+        'game-server-rcon-console': false,
+        'game-server-rcon-players': false,
+    })
+    const server = ref({
+        id: 0,
+        uuid: '',
+        uuid_short: '',
+        enabled: false,
+        installed: false,
+        blocked: false,
+        name: '',
+        ds_id: 0,
+        game_id: 0,
+        game_mod_id: 0,
+        server_ip: '',
+        server_port: 0,
+        query_port: 0,
+        rcon_port: 0,
+        game: {},
+        online: false,
+        rcon: '',
+        dir: '',
+        su_user: '',
+        start_command: '',
+        aliases: null,
+    })
+    const settings = ref([])
+    const apiProcesses = ref(0)
 
-            'game-server-console-view': false,
-            'game-server-console-send': false,
+    // From legacy servers.js - form port state
+    const formIp = ref('')
+    const formPort = ref(0)
+    const formQueryPort = ref(0)
+    const formRconPort = ref(0)
 
-            'game-server-rcon-console': false,
-            'game-server-rcon-players': false,
-        },
-        server: {
-            id: 0,
-            uuid: '',
-            uuid_short: '',
-            enabled: false,
-            installed: false,
-            blocked: false,
-            name: '',
-            ds_id: 0,
-            game_id: 0,
-            game_mod_id: 0,
-            server_ip: '',
-            server_port: 0,
-            query_port: 0,
-            rcon_port: 0,
-            game: {},
-            online: false,
+    // Getters
+    const loading = computed(() => apiProcesses.value > 0)
+    const canStart = computed(() => Boolean(abilities.value['game-server-start']))
+    const canStop = computed(() => Boolean(abilities.value['game-server-stop']))
+    const canRestart = computed(() => Boolean(abilities.value['game-server-restart']))
+    const canUpdate = computed(() => Boolean(abilities.value['game-server-update']))
+    const canReadConsole = computed(() => Boolean(abilities.value['game-server-console-view']))
+    const canSendConsole = computed(() => Boolean(abilities.value['game-server-console-send']))
+    const canManageFiles = computed(() => Boolean(abilities.value['game-server-files']))
+    const canManageTasks = computed(() => Boolean(abilities.value['game-server-tasks']))
+    const canManageSettings = computed(() => Boolean(abilities.value['game-server-settings']))
+    const getServer = computed(() => server.value)
 
-            // admin
-            rcon: '',
-            dir: '',
-            su_user: '',
-            start_command: '',
-            aliases: null,
-        },
-        settings: [],
+    // Actions
+    function setServerId(id) {
+        serverId.value = id
+    }
 
-        apiProcesses: 0,
-    }),
-    getters: {
-        loading: (state) => state.apiProcesses > 0,
-        canStart(state) {
-            return Boolean(state.abilities['game-server-start'])
-        },
-        canStop(state) {
-            return Boolean(state.abilities['game-server-stop'])
-        },
-        canRestart(state) {
-            return Boolean(state.abilities['game-server-restart'])
-        },
-        canUpdate(state) {
-            return Boolean(state.abilities['game-server-update'])
-        },
-        canReadConsole(state) {
-            return Boolean(state.abilities['game-server-console-view'])
-        },
-        canSendConsole(state) {
-            return Boolean(state.abilities['game-server-console-send'])
-        },
-        canManageFiles(state) {
-            return Boolean(state.abilities['game-server-files'])
-        },
-        canManageTasks(state) {
-            return Boolean(state.abilities['game-server-tasks'])
-        },
-        canManageSettings(state) {
-            return Boolean(state.abilities['game-server-settings'])
-        },
-        getServer(state) {
-            return state.server;
+    async function fetchServer() {
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/servers/' + serverId.value)
+            server.value = response.data
+        } catch (error) {
+            if (error.__CANCEL__) {
+                return
+            }
+            throw error
+        } finally {
+            apiProcesses.value--
         }
-    },
-    actions: {
-        setServerId(serverId) {
-            this.serverId = serverId;
-        },
-        async fetchServer() {
-            this.apiProcesses++
+    }
 
-            try {
-                const response = await axios.get('/api/servers/' + this.serverId)
-                this.server = response.data;
-            } catch (error) {
-                if (error.__CANCEL__) {
-                    return
-                }
-                throw error
-            } finally {
-                this.apiProcesses--
+    async function fetchAbilities() {
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/servers/' + serverId.value + '/abilities')
+            abilities.value = response.data
+        } catch (error) {
+            if (error.__CANCEL__) {
+                return
             }
-        },
-        async fetchAbilities() {
-            this.apiProcesses++
-
-            try {
-                const response = await axios.get('/api/servers/' + this.serverId + '/abilities')
-                this.abilities = response.data;
-            } catch (error) {
-                if (error.__CANCEL__) {
-                    return
-                }
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-        },
-        async fetchSettings() {
-            this.apiProcesses++
-
-            try {
-                const response = await axios.get('/api/servers/' + this.serverId + '/settings')
-                this.settings = response.data;
-            } catch (error) {
-                if (error.__CANCEL__) {
-                    return
-                }
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-        },
-        async save(server) {
-            this.apiProcesses++
-
-            try {
-                await axios.put('/api/servers/' + this.serverId, server)
-            } catch (error) {
-                if (error.__CANCEL__) {
-                    return
-                }
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-
-        },
-        async saveSettings(settings) {
-            this.apiProcesses++
-
-            try {
-                await axios.put('/api/servers/' + this.serverId + '/settings', settings)
-            } catch (error) {
-                if (error.__CANCEL__) {
-                    return
-                }
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
+            throw error
+        } finally {
+            apiProcesses.value--
         }
-    },
+    }
+
+    async function fetchSettings() {
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/servers/' + serverId.value + '/settings')
+            settings.value = response.data
+        } catch (error) {
+            if (error.__CANCEL__) {
+                return
+            }
+            throw error
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function save(serverData) {
+        apiProcesses.value++
+        try {
+            await axios.put('/api/servers/' + serverId.value, serverData)
+        } catch (error) {
+            if (error.__CANCEL__) {
+                return
+            }
+            throw error
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function saveSettings(settingsData) {
+        apiProcesses.value++
+        try {
+            await axios.put('/api/servers/' + serverId.value + '/settings', settingsData)
+        } catch (error) {
+            if (error.__CANCEL__) {
+                return
+            }
+            throw error
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    // From legacy servers.js - form port setters
+    function setFormIp(ip) {
+        formIp.value = ip
+    }
+
+    function setFormPort(port) {
+        formPort.value = port
+    }
+
+    function setFormQueryPort(port) {
+        formQueryPort.value = port
+    }
+
+    function setFormRconPort(port) {
+        formRconPort.value = port
+    }
+
+    return {
+        // State
+        errors,
+        serverId,
+        abilities,
+        server,
+        settings,
+        apiProcesses,
+        formIp,
+        formPort,
+        formQueryPort,
+        formRconPort,
+
+        // Getters
+        loading,
+        canStart,
+        canStop,
+        canRestart,
+        canUpdate,
+        canReadConsole,
+        canSendConsole,
+        canManageFiles,
+        canManageTasks,
+        canManageSettings,
+        getServer,
+
+        // Actions
+        setServerId,
+        fetchServer,
+        fetchAbilities,
+        fetchSettings,
+        save,
+        saveSettings,
+        setFormIp,
+        setFormPort,
+        setFormQueryPort,
+        setFormRconPort,
+    }
 })

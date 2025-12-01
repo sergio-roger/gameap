@@ -85,8 +85,10 @@
 </template>
 
 <script>
-    import { mapState } from 'vuex'
     import { ref } from "vue"
+    import { storeToRefs } from 'pinia'
+    import { useServerStore } from '@/store/server'
+    import { useServerRconStore } from '@/store/serverRcon'
     import _ from 'lodash'
     import { pluralize, trans } from '@/i18n/i18n'
     import GButton from "../GButton.vue"
@@ -101,6 +103,17 @@
       components: {GButton},
         props: {
             serverId: Number,
+        },
+        setup() {
+            const serverStore = useServerStore()
+            const rconStore = useServerRconStore()
+            const { players } = storeToRefs(rconStore)
+
+            return {
+                serverStore,
+                rconStore,
+                players,
+            }
         },
         data: function () {
             return {
@@ -128,7 +141,7 @@
         },
         methods: {
             updatePlayers() {
-                this.$store.dispatch('rconPlayers/fetchPlayers');
+                this.rconStore.fetchPlayers();
             },
             openDialog(action, playerIndex) {
                 this.resetErrors();
@@ -209,53 +222,43 @@
                 };
             },
             ban() {
-                this.$store.dispatch('rconPlayers/banPlayer', {
-                    player: this.form.player,
-                    reason: this.form.reason,
-                    time: this.form.time,
-                }).then(() => {
-                    this.hideModal();
+                this.rconStore.banPlayer(this.form.player, this.form.reason, this.form.time)
+                    .then(() => {
+                        this.hideModal();
 
-                    notification(this.trans('rcon.ban_msg_success'))
-                }).catch((e) => {
-                    this.hideModal();
+                        notification(this.trans('rcon.ban_msg_success'))
+                    }).catch((e) => {
+                        this.hideModal();
 
-                    errorNotification(e);
-                });
+                        errorNotification(e);
+                    });
             },
             kick() {
-                this.$store.dispatch('rconPlayers/kickPlayer', {
-                    player: this.form.player,
-                    reason: this.form.reason
-                }).then(() => {
-                    this.hideModal();
+                this.rconStore.kickPlayer(this.form.player, this.form.reason)
+                    .then(() => {
+                        this.hideModal();
 
-                  notification(this.trans('rcon.kick_msg_success'))
-                }).catch((e) => {
-                    this.hideModal();
+                        notification(this.trans('rcon.kick_msg_success'))
+                    }).catch((e) => {
+                        this.hideModal();
 
-                  errorNotification(e);
-                });
+                        errorNotification(e);
+                    });
             },
             sendMessage() {
-                this.$store.dispatch('rconPlayers/sendMessage', {
-                    playerId: this.form.playerId,
-                    message: this.form.message
-                }).then(() => {
-                    this.hideModal();
+                this.rconStore.sendPlayerMessage(this.form.playerId, this.form.message)
+                    .then(() => {
+                        this.hideModal();
 
-                    notification(this.trans('rcon.message_msg_success'))
-                }).catch((e) => {
-                    this.hideModal();
+                        notification(this.trans('rcon.message_msg_success'))
+                    }).catch((e) => {
+                        this.hideModal();
 
-                    errorNotification(e);
-                });
+                        errorNotification(e);
+                    });
             }
         },
         computed: {
-            ...mapState({
-                players: state => state.rconPlayers.players,
-            }),
             dialogTitle() {
                 switch (this.dialogAction) {
                     case 'ban':
@@ -277,8 +280,8 @@
             }
         },
         mounted() {
-            this.$store.dispatch('servers/setServerId', this.serverId);
-            this.$store.dispatch('rconPlayers/fetchPlayers');
+            this.serverStore.setServerId(this.serverId);
+            this.rconStore.fetchPlayers();
         }
     }
 </script>

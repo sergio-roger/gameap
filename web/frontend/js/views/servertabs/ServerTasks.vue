@@ -163,8 +163,10 @@
 </template>
 
 <script>
-    import { mapState } from 'vuex';
     import { ref } from "vue";
+    import { storeToRefs } from 'pinia'
+    import { useServerStore } from '@/store/server'
+    import { useServerTasksStore } from '@/store/serverTasks'
     import _ from 'lodash';
     import { pluralize, trans } from '@/i18n/i18n'
     import GButton from "@/components/GButton.vue";
@@ -186,6 +188,17 @@
                 restart: true,
                 update: true
             },
+        },
+        setup() {
+            const serverStore = useServerStore()
+            const tasksStore = useServerTasksStore()
+            const { tasks } = storeToRefs(tasksStore)
+
+            return {
+                serverStore,
+                tasksStore,
+                tasks,
+            }
         },
         data: function () {
             return {
@@ -262,7 +275,7 @@
                     : '';
 
                 if (this.selectedTaskIndex === null) {
-                    this.$store.dispatch('servers/storeTask', form)
+                    this.tasksStore.storeTask(form)
                         .then(() => {
                             this.hideModal();
                         }).catch((e) => {
@@ -271,10 +284,8 @@
                             errorNotification(e);
                         });
                 } else {
-                    this.$store.dispatch('servers/updateTask', {
-                            taskIndex: this.selectedTaskIndex,
-                            task: form
-                        }).then(() => {
+                    this.tasksStore.updateTask(this.selectedTaskIndex, form)
+                        .then(() => {
                             this.hideModal();
                         }).catch((e) => {
                             this.hideModal();
@@ -339,7 +350,7 @@
             },
             deleteTask(taskIndex) {
                 confirm(this.trans('servers_tasks.confirm_remove'), () => {
-                    this.$store.dispatch('servers/destroyTask', taskIndex);
+                    this.tasksStore.destroyTask(taskIndex);
                 })
             },
             humanRepeatText(repeatInt) {
@@ -390,9 +401,6 @@
             },
         },
         computed: {
-            ...mapState({
-                tasks: state => state.servers.tasks,
-            }),
             repeat: {
                 get() {
                     return parseInt(this.taskRepeatRadio === RADIO_REPEAT_CUSTOM
@@ -494,8 +502,8 @@
             }
         },
         mounted() {
-            this.$store.dispatch('servers/setServerId', this.serverId);
-            this.$store.dispatch('servers/fetchTasks');
+            this.serverStore.setServerId(this.serverId);
+            this.tasksStore.fetchTasks();
         }
     }
 </script>

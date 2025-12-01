@@ -1,9 +1,10 @@
 <script setup>
     import {h, ref, onMounted, computed} from 'vue'
+    import {storeToRefs} from 'pinia'
     import {trans} from "@/i18n/i18n";
-    import store from "@/legacy/store";
     import {useAuthStore} from "@/store/auth";
     import {useServerFiltersStore} from "@/store/serverFilters";
+    import {useServerListStore} from "@/store/serverList";
 
     import GButton from "@/components/GButton.vue";
     import Loading from "@/components/Loading.vue";
@@ -20,6 +21,8 @@
 
     const authStore = useAuthStore();
     const filtersStore = useServerFiltersStore();
+    const serverListStore = useServerListStore();
+    const { servers: serversList } = storeToRefs(serverListStore);
 
     const createColumns = () => {
         return [
@@ -186,7 +189,7 @@
     });
 
     onMounted(() => {
-      store.dispatch('servers/fetchServers').finally(() => {
+      serverListStore.fetchServersByNode().finally(() => {
         loading.value = false;
       });
 
@@ -198,7 +201,7 @@
     });
 
     const data = computed(() => {
-        return store.state.servers.serversList.filter((server) => {
+        return serversList.value.filter((server) => {
             let skip = false;
 
             if (
@@ -231,10 +234,10 @@
 
     const games = computed(() => {
         const map = new Map;
-        for (const idx in store.state.servers.serversList) {
+        for (const idx in serversList.value) {
             map.set(
-                store.state.servers.serversList[idx].game.code,
-                store.state.servers.serversList[idx].game.name,
+                serversList.value[idx].game.code,
+                serversList.value[idx].game.name,
             )
         }
 
@@ -269,8 +272,8 @@
 
     const gamesIPOptions = computed(() => {
         const set = new Set;
-        for (const idx in store.state.servers.serversList) {
-            set.add(store.state.servers.serversList[idx].server_ip)
+        for (const idx in serversList.value) {
+            set.add(serversList.value[idx].server_ip)
         }
 
         var options = [];

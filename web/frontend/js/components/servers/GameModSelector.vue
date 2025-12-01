@@ -31,11 +31,13 @@
 </template>
 
 <script setup>
-  import { computed, h, watch, defineModel, onUnmounted } from 'vue';
-  import { useStore } from 'vuex';
-  import {trans} from "@/i18n/i18n";
-  import {NFormItem} from "naive-ui";
-  import GameIcon from "../GameIcon.vue";
+  import { computed, h, watch, defineModel, onUnmounted } from 'vue'
+  import { storeToRefs } from 'pinia'
+  import { useGameStore } from '@/store/game'
+  import { useGameListStore } from '@/store/gameList'
+  import { trans } from '@/i18n/i18n'
+  import { NFormItem } from 'naive-ui'
+  import GameIcon from '../GameIcon.vue'
 
   const props = defineProps({
     games: Object,
@@ -47,13 +49,13 @@
   const gameModel = defineModel('game')
   const gameModModel = defineModel('gameMod')
 
-  const store = useStore();
-
-  const gameModsList = computed(() => store.state.gameMods.gameModsList);
+  const gameStore = useGameStore()
+  const gameListStore = useGameListStore()
+  const { gameModsList } = storeToRefs(gameListStore)
 
   onUnmounted(() => {
-    store.dispatch('gameMods/setGameMod', null)
-    store.dispatch('games/setGameCode', null)
+    gameListStore.setSelectedGameMod(null)
+    gameStore.setGameCode(null)
   });
 
   const renderGameLabel = (option) => {
@@ -72,12 +74,12 @@
   });
 
   watch(gameModel, () => {
-    store.dispatch('games/setGameCode', gameModel.value)
-    store.dispatch('gameMods/fetchGameModsList', gameModel.value);
+    gameStore.setGameCode(gameModel.value)
+    gameListStore.fetchGameModsList(gameModel.value)
   });
 
   watch(gameModModel, () => {
-    store.dispatch('gameMods/setGameMod', gameModModel.value)
+    gameListStore.setSelectedGameMod(gameModModel.value)
   });
 
   watch(gameModsList, (val) => {

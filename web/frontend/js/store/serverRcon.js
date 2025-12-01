@@ -1,85 +1,166 @@
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 import axios from '../config/axios'
-
 import { useServerStore } from './server.js'
 
-export const useServerRconStore = defineStore('serverRcon', {
-    state: () => ({
-        fastRcon: [],
-        rconSupportedFeatures: {
-            rcon: false,
-            playersManage: false,
-        },
-        output: '',
+export const useServerRconStore = defineStore('serverRcon', () => {
+    // State
+    const fastRcon = ref([])
+    const rconSupportedFeatures = ref({
+        rcon: false,
+        playersManage: false,
+    })
+    const output = ref('')
+    const apiProcesses = ref(0)
 
-        apiProcesses: 0,
-    }),
-    getters: {
-        loading: (state) => state.apiProcesses > 0,
-        serverId: () => {
-            const serverStore = useServerStore()
+    // From legacy rcon/players.js
+    const players = ref([])
 
-            return serverStore.serverId
-        },
-        canUseRcon() {
-            const serverStore = useServerStore()
+    // Getters
+    const loading = computed(() => apiProcesses.value > 0)
 
-            return Boolean(serverStore.abilities['game-server-rcon-console'])
-        },
-        canManageRconPlayers() {
-            const serverStore = useServerStore()
+    const serverId = computed(() => {
+        const serverStore = useServerStore()
+        return serverStore.serverId
+    })
 
-            return Boolean(serverStore.abilities['game-server-rcon-players'])
-        },
-    },
-    actions: {
-        setServerId(serverId) {
-            const serverStore = useServerStore()
+    const canUseRcon = computed(() => {
+        const serverStore = useServerStore()
+        return Boolean(serverStore.abilities['game-server-rcon-console'])
+    })
 
-            serverStore.setServerId(serverId)
-        },
-        async fetchRconSupportedFeatures() {
-            const serverStore = useServerStore()
-            this.apiProcesses++
+    const canManageRconPlayers = computed(() => {
+        const serverStore = useServerStore()
+        return Boolean(serverStore.abilities['game-server-rcon-players'])
+    })
 
-            try {
-                const response = await axios.get('/api/servers/' + serverStore.serverId + '/rcon/features')
-                this.rconSupportedFeatures = response.data;
-            } catch (error) {
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-        },
-        async fetchFastRcon() {
-            const serverStore = useServerStore()
+    // Actions
+    function setServerId(id) {
+        const serverStore = useServerStore()
+        serverStore.setServerId(id)
+    }
 
-            this.apiProcesses++
+    async function fetchRconSupportedFeatures() {
+        const serverStore = useServerStore()
+        apiProcesses.value++
 
-            try {
-                const response = await axios.get('/api/servers/' + serverStore.serverId + '/rcon/fast_rcon')
-                this.fastRcon = response.data;
-            } catch (error) {
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-        },
-        async sendCommand(command) {
-            const serverStore = useServerStore()
+        try {
+            const response = await axios.get('/api/servers/' + serverStore.serverId + '/rcon/features')
+            rconSupportedFeatures.value = response.data
+        } finally {
+            apiProcesses.value--
+        }
+    }
 
-            this.apiProcesses++
+    async function fetchFastRcon() {
+        const serverStore = useServerStore()
+        apiProcesses.value++
 
-            try {
-                const response = await axios.post('/api/servers/' + serverStore.serverId + '/rcon', {
-                    command: command
-                });
-                this.output = response.data.output;
-            } catch (error) {
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-        },
-    },
+        try {
+            const response = await axios.get('/api/servers/' + serverStore.serverId + '/rcon/fast_rcon')
+            fastRcon.value = response.data
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function sendCommand(command) {
+        const serverStore = useServerStore()
+        apiProcesses.value++
+
+        try {
+            const response = await axios.post('/api/servers/' + serverStore.serverId + '/rcon', {
+                command: command
+            })
+            output.value = response.data.output
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    // From legacy rcon/players.js
+    async function fetchPlayers() {
+        const serverStore = useServerStore()
+        if (serverStore.serverId <= 0) {
+            return
+        }
+
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/servers/' + serverStore.serverId + '/rcon/players')
+            players.value = response.data
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function kickPlayer(player, reason) {
+        const serverStore = useServerStore()
+
+        apiProcesses.value++
+        try {
+            await axios.post('/api/servers/' + serverStore.serverId + '/rcon/players/kick', {
+                player: player,
+                reason: reason
+            })
+            await fetchPlayers()
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function banPlayer(player, reason, time) {
+        const serverStore = useServerStore()
+
+        apiProcesses.value++
+        try {
+            await axios.post('/api/servers/' + serverStore.serverId + '/rcon/players/ban', {
+                player: player,
+                reason: reason,
+                time: time,
+            })
+            await fetchPlayers()
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function sendPlayerMessage(playerId, message) {
+        const serverStore = useServerStore()
+
+        apiProcesses.value++
+        try {
+            await axios.post('/api/servers/' + serverStore.serverId + '/rcon/players/message', {
+                player: playerId,
+                message: message,
+            })
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    return {
+        // State
+        fastRcon,
+        rconSupportedFeatures,
+        output,
+        apiProcesses,
+        players,
+
+        // Getters
+        loading,
+        serverId,
+        canUseRcon,
+        canManageRconPlayers,
+
+        // Actions
+        setServerId,
+        fetchRconSupportedFeatures,
+        fetchFastRcon,
+        sendCommand,
+        fetchPlayers,
+        kickPlayer,
+        banPlayer,
+        sendPlayerMessage,
+    }
 })

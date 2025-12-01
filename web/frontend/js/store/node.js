@@ -1,53 +1,113 @@
 import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 import axios from '../config/axios'
 
-export const useNodeStore = defineStore('node', {
-    state: () => ({
-        nodeId: 0,
-        node: {},
-        daemonInfo: {},
+export const useNodeStore = defineStore('node', () => {
+    // State
+    const nodeId = ref(0)
+    const node = ref({})
+    const daemonInfo = ref({})
+    const apiProcesses = ref(0)
 
-        // This is a counter to keep track of how many API processes are running
-        apiProcesses: 0,
-    }),
-    getters: {
-        loading: (state) => state.apiProcesses > 0,
-    },
-    actions: {
-        setNodeId(nodeId) {
-            this.nodeId = nodeId;
-        },
-        async fetchNode() {
-            this.apiProcesses++
-            try {
-                const response = await axios.get('/api/dedicated_servers/'+this.nodeId)
-                this.node = response.data;
-            } catch (error) {
-                throw error
-            } finally {
-                this.apiProcesses--
+    // From legacy dedicatedServers.js
+    const ipList = ref([])
+    const busyPorts = ref([])
+
+    // Getters
+    const loading = computed(() => apiProcesses.value > 0)
+
+    // Actions
+    function setNodeId(id) {
+        nodeId.value = id
+    }
+
+    function resetNodeId() {
+        nodeId.value = 0
+        ipList.value = []
+        busyPorts.value = []
+    }
+
+    async function fetchNode() {
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/dedicated_servers/' + nodeId.value)
+            node.value = response.data
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function fetchDaemonInfo() {
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/dedicated_servers/' + nodeId.value + '/daemon')
+            daemonInfo.value = response.data
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function saveNode(nodeData) {
+        apiProcesses.value++
+        try {
+            await axios.put('/api/dedicated_servers/' + nodeId.value, nodeData)
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    // From legacy dedicatedServers.js
+    async function fetchIpList() {
+        if (nodeId.value <= 0) {
+            return
+        }
+
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/dedicated_servers/' + nodeId.value + '/ip_list')
+            ipList.value = response.data
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    async function fetchBusyPorts(callback = null) {
+        if (nodeId.value <= 0) {
+            return
+        }
+
+        apiProcesses.value++
+        try {
+            const response = await axios.get('/api/dedicated_servers/' + nodeId.value + '/busy_ports')
+            busyPorts.value = response.data
+
+            if (typeof callback === 'function') {
+                callback()
             }
-        },
-        async fetchDaemonInfo() {
-            this.apiProcesses++
-            try {
-                const response = await axios.get('/api/dedicated_servers/'+this.nodeId+'/daemon')
-                this.daemonInfo = response.data;
-            } catch (error) {
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-        },
-        async saveNode(node) {
-            this.apiProcesses++
-            try {
-                await axios.put('/api/dedicated_servers/'+this.nodeId, node)
-            } catch (error) {
-                throw error
-            } finally {
-                this.apiProcesses--
-            }
-        },
-    },
+        } finally {
+            apiProcesses.value--
+        }
+    }
+
+    return {
+        // State
+        nodeId,
+        node,
+        daemonInfo,
+        apiProcesses,
+        ipList,
+        busyPorts,
+
+        // Getters
+        loading,
+
+        // Actions
+        setNodeId,
+        resetNodeId,
+        fetchNode,
+        fetchDaemonInfo,
+        saveNode,
+        fetchIpList,
+        fetchBusyPorts,
+    }
 })

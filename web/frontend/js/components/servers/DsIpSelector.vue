@@ -25,8 +25,10 @@
 
 <script setup>
   import { computed, watch, onUnmounted } from 'vue'
-  import { useStore } from 'vuex'
-  import {NFormItem} from "naive-ui"
+  import { storeToRefs } from 'pinia'
+  import { useNodeStore } from '@/store/node'
+  import { useServerStore } from '@/store/server'
+  import { NFormItem } from 'naive-ui'
 
   const props = defineProps({
     dsList: Object,
@@ -49,9 +51,9 @@
   const nodeIdModel = defineModel('nodeId')
   const ipModel = defineModel('ip')
 
-  const store = useStore();
-
-  const ipList = computed(() => store.state.dedicatedServers.ipList);
+  const nodeStore = useNodeStore()
+  const serverStore = useServerStore()
+  const { ipList } = storeToRefs(nodeStore)
 
   const nodesOptions = computed(() => {
     return Object.entries(props.dsList).map(([id, name]) => ({ value: Number(id), label: name }));
@@ -68,15 +70,15 @@
   });
 
   watch(nodeIdModel, (val) => {
-    store.dispatch('dedicatedServers/setDsId', nodeIdModel.value);
-    store.dispatch('dedicatedServers/fetchIpList');
+    nodeStore.setNodeId(nodeIdModel.value)
+    nodeStore.fetchIpList()
   }, { immediate: true });
 
   watch(ipModel, (val) => {
-    store.dispatch('servers/setIp', ipModel.value)
+    serverStore.setFormIp(ipModel.value)
   });
 
   onUnmounted(() => {
-    store.dispatch('dedicatedServers/resetDsId');
+    nodeStore.resetNodeId()
   });
 </script>

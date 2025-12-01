@@ -1,7 +1,4 @@
 import { createApp } from 'vue';
-import { createStore } from 'vuex';
-// store
-import fm from './store.js';
 
 import './style.css'
 
@@ -14,4 +11,4 @@ const store = createStore({
     modules: { fm },
 });
 
-window.fm = createApp(App).use(store).mount('#fm');
+window.fm = createApp(App).mount('#fm');

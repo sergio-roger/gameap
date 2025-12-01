@@ -39,7 +39,10 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, defineModel } from 'vue';
-import { useStore } from 'vuex';
+import { storeToRefs } from 'pinia'
+import { useNodeStore } from '@/store/node'
+import { useGameStore } from '@/store/game'
+import { useServerStore } from '@/store/server'
 import {
   NFormItem,
   NInputNumber
@@ -95,19 +98,18 @@ const props = defineProps({
 
 const emit = defineEmits(['update:serverPort', 'update:rconPort', 'update:queryPort']);
 
-const store = useStore();
+const nodeStore = useNodeStore()
+const gameStore = useGameStore()
+const serverStore = useServerStore()
+const { nodeId: dsId, busyPorts } = storeToRefs(nodeStore)
+const { gameCode } = storeToRefs(gameStore)
+const { formIp: selectedIp } = storeToRefs(serverStore)
 
 const serverPort = defineModel('serverPort')
 const queryPort = defineModel('queryPort')
 const rconPort = defineModel('rconPort')
 
-const serverPortWarning = ref('');
-
-const selectedIp = computed(() => store.state.servers.ip);
-
-const dsId = computed(() => store.state.dedicatedServers.dsId);
-const busyPorts = computed(() => store.state.dedicatedServers.busyPorts);
-const gameCode = computed(() => store.state.games.gameCode);
+const serverPortWarning = ref('')
 
 function setPorts() {
   if (props.initialServerIp === selectedIp.value) {
@@ -159,11 +161,11 @@ function checkPorts() {
 }
 
 onMounted(() => {
-  store.dispatch('dedicatedServers/fetchBusyPorts', checkPorts);
+  nodeStore.fetchBusyPorts(checkPorts)
 });
 
 watch(dsId, () => {
-  store.dispatch('dedicatedServers/fetchBusyPorts', checkPorts);
+  nodeStore.fetchBusyPorts(checkPorts)
 });
 
 watch(serverPort, (newVal, oldVal) => {

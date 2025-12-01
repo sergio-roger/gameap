@@ -9,35 +9,43 @@
     </div>
 </template>
 
-<script>
-    import { mapState } from 'vuex';
+<script setup>
+import { computed, watch, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useNodeStore } from '@/store/node'
+import { useServerStore } from '@/store/server'
+import { useServerListStore } from '@/store/serverList'
+import { trans } from '@/i18n/i18n'
 
-    export default {
-        name: "ServerSelector",
-        props: {
-            serverIdFieldName: {
-              type: String,
-              default: 'game_server_id',
-            }
-        },
-        mounted() {
-            this.selectedServerId = this.selectedServerId || -1;
-        },
-        computed: {
-            ...mapState({
-                dsId: state => state.dedicatedServers.dsId,
-                serversList: state => state.servers.serversList,
-            }),
-            selectedServerId: {
-                get() { return this.$store.state.servers.serverId},
-                set(serverId) { this.$store.dispatch('servers/setServerId', serverId)}
-            }
-        },
-        watch: {
-            dsId() {
-                  this.$store.dispatch('servers/fetchServers');
-            }
-        }
-
+const props = defineProps({
+    serverIdFieldName: {
+        type: String,
+        default: 'game_server_id',
     }
+})
+
+const nodeStore = useNodeStore()
+const serverStore = useServerStore()
+const serverListStore = useServerListStore()
+const { nodeId: dsId } = storeToRefs(nodeStore)
+const { servers: serversList } = storeToRefs(serverListStore)
+
+const selectedServerId = computed({
+    get() {
+        return serverStore.serverId
+    },
+    set(serverId) {
+        serverStore.setServerId(serverId)
+    }
+})
+
+onMounted(() => {
+    if (!selectedServerId.value) {
+        selectedServerId.value = -1
+    }
+})
+
+watch(dsId, () => {
+    serverListStore.fetchServersByNode(dsId.value)
+})
 </script>
