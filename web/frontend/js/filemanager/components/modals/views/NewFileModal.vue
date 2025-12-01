@@ -1,33 +1,16 @@
 <template>
-    <div class="modal-content fm-modal-folder">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.newFile.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="fm-file-name">{{ lang.modal.newFile.fieldName }}</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="fm-file-name"
-                    ref="fileNameInput"
-                    v-bind:class="{ 'is-invalid': fileExist }"
-                    v-model="fileName"
-                    v-on:keyup="validateFileName"
-                />
-                <div class="invalid-feedback" v-show="fileExist">
-                    {{ lang.modal.newFile.fieldFeedback }}
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-info rounded mr-2" v-bind:disabled="!submitActive" v-on:click="addFile">
-                {{ lang.btn.submit }}
-            </button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
+    <div class="mb-3">
+        <label for="fm-file-name" class="block mb-2">{{ lang.modal.newFile.fieldName }}</label>
+        <n-input
+            id="fm-file-name"
+            ref="fileNameInput"
+            v-model:value="fileName"
+            :status="fileExist ? 'error' : undefined"
+            @keyup="validateFileName"
+            @keyup.enter="submitActive && addFile()"
+        />
+        <div v-if="fileExist" class="text-red-500 text-sm mt-1">
+            {{ lang.modal.newFile.fieldFeedback }}
         </div>
     </div>
 </template>
@@ -67,4 +50,11 @@ function addFile() {
         }
     })
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.submit, color: 'green', icon: 'fa-solid fa-plus', action: addFile, disabled: !submitActive.value },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>

@@ -1,103 +1,57 @@
 <template>
-    <div class="modal-content fm-modal-upload">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.upload.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    <div class="fm-modal-upload">
+        <div class="fm-btn-wrapper relative overflow-hidden mb-4" v-show="!progressBar">
+            <n-button class="w-full">{{ lang.btn.uploadSelect }}</n-button>
+            <input
+                type="file"
+                multiple
+                name="myfile"
+                class="absolute left-0 top-0 opacity-0 cursor-pointer text-[100px] h-full w-full"
+                @change="selectFiles($event)"
+            />
         </div>
-        <div class="modal-body">
-            <div class="fm-btn-wrapper" v-show="!progressBar">
-                <button type="button" class="btn btn-secondary btn-block file-upload">
-                    {{ lang.btn.uploadSelect }}
-                </button>
-                <input type="file" multiple name="myfile" v-on:change="selectFiles($event)" />
-            </div>
-            <div class="fm-upload-list" v-if="countFiles">
-                <div class="grid grid-cols-2 gap-4 my-4" v-for="(item, index) in newFiles" v-bind:key="index">
-                    <div class="w-75 text-truncate">
-                        <i v-bind:class="mimeToIcon(item.type)" />
-                        {{ item.name }}
-                    </div>
-                    <div class="text-right">
-                        {{ bytesToHuman(item.size) }}
-                    </div>
+        <div class="fm-upload-list" v-if="countFiles">
+            <div class="grid grid-cols-2 gap-4 my-4" v-for="(item, index) in newFiles" :key="index">
+                <div class="truncate">
+                    <i :class="mimeToIcon(item.type)" />
+                    {{ item.name }}
                 </div>
-                <hr />
-                <div class="grid grid-cols-2 gap-4 my-4">
-                    <div>
-                        <strong>{{ lang.modal.upload.selected }}</strong>
-                        {{ newFiles.length }}
-                    </div>
-                    <div class="text-right">
-                        <strong>{{ lang.modal.upload.size }}</strong>
-                        {{ allFilesSize }}
-                    </div>
-                </div>
-                <hr />
-                <div class="grid grid-cols-3 gap-4 my-3 my-4">
-                    <div>
-                        <strong>{{ lang.modal.upload.ifExist }}</strong>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input
-                            class="form-check-input"
-                            id="uploadRadio1"
-                            type="radio"
-                            name="uploadOptions"
-                            v-bind:checked="!overwrite"
-                            v-on:change="overwrite = 0"
-                        />
-                        <label class="form-check-label" for="uploadRadio1">
-                            {{ lang.modal.upload.skip }}
-                        </label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input
-                            class="form-check-input"
-                            id="uploadRadio2"
-                            type="radio"
-                            name="uploadOptions"
-                            v-bind:checked="overwrite"
-                            v-on:change="overwrite = 1"
-                        />
-                        <label class="form-check-label" for="uploadRadio2">
-                            {{ lang.modal.upload.overwrite }}
-                        </label>
-                    </div>
-                </div>
-                <hr />
-            </div>
-            <div v-else>
-                <p>{{ lang.modal.upload.noSelected }}</p>
-            </div>
-            <div class="fm-upload-info my-4">
-                <!-- Progress Bar -->
-                <div class="progress w-full bg-stone-200 dark:bg-stone-700" v-show="countFiles">
-                    <div
-                        class="progress-bar progress-bar-striped bg-lime-600 text-xs font-medium text-lime-100 text-center leading-none"
-                        role="progressbar"
-                        v-bind:aria-valuenow="progressBar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        v-bind:style="{ width: progressBar + '%' }"
-                    >
-                        {{ progressBar }}%
-                    </div>
+                <div class="text-right">
+                    {{ bytesToHuman(item.size) }}
                 </div>
             </div>
+            <n-divider />
+            <div class="grid grid-cols-2 gap-4 my-4">
+                <div>
+                    <strong>{{ lang.modal.upload.selected }}</strong>
+                    {{ newFiles.length }}
+                </div>
+                <div class="text-right">
+                    <strong>{{ lang.modal.upload.size }}</strong>
+                    {{ allFilesSize }}
+                </div>
+            </div>
+            <n-divider />
+            <div class="flex items-center gap-4 my-4">
+                <div>
+                    <strong>{{ lang.modal.upload.ifExist }}</strong>
+                </div>
+                <n-radio-group v-model:value="overwrite">
+                    <n-radio :value="0">{{ lang.modal.upload.skip }}</n-radio>
+                    <n-radio :value="1">{{ lang.modal.upload.overwrite }}</n-radio>
+                </n-radio-group>
+            </div>
+            <n-divider />
         </div>
-        <div class="modal-footer">
-            <button
-                type="button"
-                class="btn rounded mr-2"
-                v-bind:class="[countFiles ? 'btn-info' : 'btn-light']"
-                v-bind:disabled="!countFiles"
-                v-on:click="uploadFiles"
-            >
-                {{ lang.btn.submit }}
-            </button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal()">{{ lang.btn.cancel }}</button>
+        <div v-else>
+            <p>{{ lang.modal.upload.noSelected }}</p>
+        </div>
+        <div class="fm-upload-info my-4" v-show="countFiles">
+            <n-progress
+                type="line"
+                :percentage="progressBar"
+                :show-indicator="true"
+            />
         </div>
     </div>
 </template>
@@ -150,40 +104,17 @@ function uploadFiles() {
         })
     }
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.submit, color: 'green', icon: 'fa-solid fa-upload', action: uploadFiles, disabled: !countFiles.value },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>
 
-<style lang="scss">
-.fm-modal-upload {
-    .fm-btn-wrapper {
-        position: relative;
-        overflow: hidden;
-        padding-bottom: 6px;
-        margin-bottom: 0.6rem;
-    }
-
-    .fm-btn-wrapper input[type='file'] {
-        font-size: 100px;
-        position: absolute;
-        left: 0;
-        top: 0;
-        opacity: 0;
-        cursor: pointer;
-    }
-
-    .fm-upload-list .fa {
-        padding-right: 0.5rem;
-    }
-
-    .fm-upload-list .form-check-inline {
-        margin-right: 0;
-    }
-
-    .fm-upload-info > .progress {
-        margin-bottom: 1rem;
-    }
-
-    .file-upload {
-        @apply block w-full inline-block align-middle text-center select-none font-normal leading-normal no-underline text-black bg-white border border-stone-300 focus:outline-none hover:bg-stone-100 focus:ring-4 focus:ring-stone-100 dark:bg-stone-800 dark:text-white dark:border-stone-600 dark:hover:bg-stone-700 dark:hover:border-stone-600 dark:focus:ring-stone-700;
-    }
+<style scoped>
+.fm-btn-wrapper:hover :deep(.n-button) {
+    background-color: var(--n-color-hover);
 }
 </style>

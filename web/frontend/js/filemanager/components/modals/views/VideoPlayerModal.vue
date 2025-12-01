@@ -1,16 +1,7 @@
 <template>
-    <div class="modal-content fm-modal-video-player">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title w-75 text-truncate">
-                {{ lang.modal.videoPlayer.title }} <small class="text-muted ps-3">{{ videoFile?.basename }}</small>
-            </h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <video ref="fmVideo" controls />
-        </div>
+    <div class="fm-modal-video-player">
+        <div class="text-sm text-stone-500 mb-2">{{ videoFile?.basename }}</div>
+        <video ref="fmVideo" controls />
     </div>
 </template>
 
@@ -42,7 +33,7 @@ onMounted(() => {
         sources: [
             {
                 src: `${settings.baseUrl}/stream-file?disk=${selectedDisk.value}&path=${encodeURIComponent(videoFile.value.path)}`,
-                type: `audio/${videoFile.value.extension}`,
+                type: `video/${videoFile.value.extension}`,
             },
         ],
     }
@@ -53,11 +44,12 @@ onBeforeUnmount(() => {
         player.value.destroy()
     }
 })
+
+defineExpose({
+    footerButtons: computed(() => []),
+})
 </script>
 
 <style lang="scss">
 @import 'plyr/plyr.scss';
-
-.fm-modal-video-player {
-}
 </style>

@@ -64,6 +64,7 @@ export default {
     getFile(disk, path) {
         return HTTP.get('download', {
             responseType: 'text',
+            transformResponse: [(data) => data],
             params: { disk, path },
         });
     },

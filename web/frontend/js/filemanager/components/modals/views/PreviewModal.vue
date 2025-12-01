@@ -1,44 +1,25 @@
 <template>
-    <div class="modal-content fm-modal-preview">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title w-75 text-truncate">
-                {{ showCropperModule ? lang.modal.cropper.title : lang.modal.preview.title }}
-                <small class="text-muted pl-3">{{ selectedItem?.basename }}</small>
-            </h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    <div class="flex flex-col">
+        <div v-if="showCropperModule" class="text-sm text-stone-500 mb-2">
+            {{ lang.modal.cropper.title }} - {{ selectedItem?.basename }}
         </div>
-        <div class="modal-body flex text-center justify-center items-center">
+        <div v-else class="text-sm text-stone-500 mb-2">
+            {{ selectedItem?.basename }}
+        </div>
+        <div class="flex text-center justify-center items-center min-h-[200px]">
             <template v-if="showCropperModule">
-                <cropper-module v-bind:imgSrc="imgSrc" v-bind:maxHeight="maxHeight" v-on:closeCropper="closeCropper" />
+                <cropper-module :imgSrc="imgSrc" :maxHeight="maxHeight" @closeCropper="closeCropper" />
             </template>
-            <transition v-else name="fade" mode="out-in">
-                <div class="spinner-border spinner-border-lg text-muted my-2" v-if="!imgSrc">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+            <template v-else>
+                <n-spin v-if="!imgSrc" size="large" />
                 <img
                     v-else
-                    v-bind:src="imgSrc"
-                    v-bind:alt="selectedItem?.basename"
-                    v-bind:style="{ 'max-height': maxHeight + 'px' }"
+                    :src="imgSrc"
+                    :alt="selectedItem?.basename"
+                    :style="{ 'max-height': maxHeight + 'px' }"
+                    class="max-w-full"
                 />
-            </transition>
-        </div>
-        <div v-if="showFooter" class="d-flex justify-content-between">
-            <span class="d-block">
-                <button
-                    type="button"
-                    class="btn btn-info rounded mr-2"
-                    v-bind:title="lang.modal.cropper.title"
-                    v-on:click="showCropperModule = true"
-                >
-                    <i class="fa-solid fa-crop-simple"></i>
-                </button>
-            </span>
-            <span class="d-block">
-                <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
-            </span>
+            </template>
         </div>
     </div>
 </template>
@@ -48,14 +29,12 @@ import { ref, computed, onMounted } from 'vue'
 import CropperModule from '../additions/CropperModule.vue'
 import { useFileManagerStore } from '../../../stores/useFileManagerStore.js'
 import { useSettingsStore } from '../../../stores/useSettingsStore.js'
-import { useModalStore } from '../../../stores/useModalStore.js'
 import { useTranslate } from '../../../composables/useTranslate.js'
 import { useModal } from '../../../composables/useModal.js'
 import GET from '../../../http/get.js'
 
 const fm = useFileManagerStore()
 const settings = useSettingsStore()
-const modal = useModalStore()
 const { lang } = useTranslate()
 const { hideModal } = useModal()
 
@@ -66,16 +45,13 @@ const auth = computed(() => settings.authHeader)
 const selectedDisk = computed(() => fm.selectedDisk)
 const selectedItem = computed(() => fm.selectedItems[0])
 
-const showFooter = computed(() => {
+const canCropImage = computed(() => {
     if (!selectedItem.value?.extension) return false
-    return canCrop(selectedItem.value.extension) && !showCropperModule.value
+    return settings.cropExtensions.includes(selectedItem.value.extension.toLowerCase())
 })
 
 const maxHeight = computed(() => {
-    if (modal.modalBlockHeight) {
-        return modal.modalBlockHeight - 170
-    }
-    return 300
+    return Math.min(window.innerHeight - 300, 600)
 })
 
 function canCrop(extension) {
@@ -99,24 +75,25 @@ function loadImage() {
     }
 }
 
+function openCropper() {
+    showCropperModule.value = true
+}
+
 onMounted(() => {
     loadImage()
 })
-</script>
 
-<style lang="scss">
-.fm-modal-preview {
-    .modal-body {
-        padding: 0;
-
-        img {
-            max-width: 100%;
+defineExpose({
+    footerButtons: computed(() => {
+        if (showCropperModule.value) {
+            return []
         }
-    }
-
-    & > .d-flex {
-        padding: 1rem;
-        border-top: 1px solid #e9ecef;
-    }
-}
-</style>
+        const buttons = []
+        if (canCropImage.value) {
+            buttons.push({ label: lang.value.modal.cropper.title, color: 'green', icon: 'fa-solid fa-crop', action: openCropper })
+        }
+        buttons.push({ label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal })
+        return buttons
+    }),
+})
+</script>

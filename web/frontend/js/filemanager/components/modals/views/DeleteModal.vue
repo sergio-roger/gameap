@@ -1,22 +1,10 @@
 <template>
-    <div class="modal-content fm-modal-delete">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.delete.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    <div>
+        <div v-if="selectedItems.length">
+            <selected-file-list />
         </div>
-        <div class="modal-body">
-            <div v-if="selectedItems.length">
-                <selected-file-list />
-            </div>
-            <div v-else>
-                <span class="text-danger">{{ lang.modal.delete.noSelected }}</span>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-danger mr-2 rounded" v-on:click="deleteItems">{{ lang.modal.delete.title }}</button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
+        <div v-else>
+            <span class="text-red-500">{{ lang.modal.delete.noSelected }}</span>
         </div>
     </div>
 </template>
@@ -44,4 +32,11 @@ function deleteItems() {
         hideModal()
     })
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.modal.delete.title, color: 'red', icon: 'fa-solid fa-trash', action: deleteItems, disabled: !selectedItems.value.length },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>

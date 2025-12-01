@@ -3,7 +3,7 @@
         <navbar-block />
         <div class="fm-body flex min-h-0">
             <context-menu />
-            <modal-block v-if="showModal" />
+            <modal-block />
             <template v-if="windowsConfig === 1">
                 <left-manager class="relative flex-grow max-w-full flex-1 h-full" manager="left" />
             </template>
@@ -40,7 +40,6 @@ import { errorNotification, notification } from '@/parts/dialogs.js'
 import { useFileManagerStore } from './stores/useFileManagerStore.js'
 import { useSettingsStore } from './stores/useSettingsStore.js'
 import { useMessagesStore } from './stores/useMessagesStore.js'
-import { useModalStore } from './stores/useModalStore.js'
 import { useTranslate } from './composables/useTranslate.js'
 
 import NavbarBlock from './components/blocks/NavbarBlock.vue'
@@ -63,7 +62,6 @@ const props = defineProps({
 const fm = useFileManagerStore()
 const settings = useSettingsStore()
 const messages = useMessagesStore()
-const modal = useModalStore()
 const { lang } = useTranslate()
 
 const interceptorIndex = ref({
@@ -74,7 +72,6 @@ const interceptorIndex = ref({
 // Computed
 const windowsConfig = computed(() => settings.windowsConfig)
 const activeManager = computed(() => fm.activeManager)
-const showModal = computed(() => modal.showModal)
 const fullScreen = computed(() => fm.fullScreen)
 
 // Methods

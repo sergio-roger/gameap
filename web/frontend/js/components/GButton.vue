@@ -30,7 +30,7 @@ const colors = {
 const disabledColors = {
   black: 'bg-stone-600 text-stone-400 dark:bg-stone-900 dark:text-stone-600',
   white: 'bg-stone-300 text-stone-400',
-  green: 'bg-lime-400 text-lime-200 dark:bg-lime-900 dark:text-lime-950',
+  green: 'bg-lime-300 text-lime-100 dark:bg-lime-900 dark:text-lime-950',
   red: 'bg-red-400 text-red-200 dark:bg-red-900 dark:text-red-950',
   orange: 'bg-orange-300 text-orange-200 dark:bg-orange-900 dark:text-orange-950',
   blue: 'bg-sky-400 text-sky-200 dark:bg-sky-900 dark:text-sky-950',

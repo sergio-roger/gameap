@@ -1,65 +1,30 @@
 <template>
-    <div class="modal-content fm-modal-unzip">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.unzip.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="d-flex justify-content-between">
-                <div>
-                    <strong>{{ lang.modal.unzip.fieldRadioName }}</strong>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input
-                        class="form-check-input"
-                        id="unzipRadio1"
-                        type="radio"
-                        v-bind:checked="!createFolder"
-                        v-on:change="createFolder = false"
-                    />
-                    <label class="form-check-label" for="unzipRadio1">
-                        {{ lang.modal.unzip.fieldRadio1 }}
-                    </label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input
-                        class="form-check-input"
-                        id="unzipRadio2"
-                        type="radio"
-                        v-bind:checked="createFolder"
-                        v-on:change="createFolder = true"
-                    />
-                    <label class="form-check-label" for="unzipRadio2">
-                        {{ lang.modal.unzip.fieldRadio2 }}
-                    </label>
-                </div>
+    <div>
+        <div class="flex items-center gap-4 mb-4">
+            <div>
+                <strong>{{ lang.modal.unzip.fieldRadioName }}</strong>
             </div>
-            <hr />
-            <div v-if="createFolder" class="form-group">
-                <label for="fm-folder-name">{{ lang.modal.unzip.fieldName }}</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="fm-folder-name"
-                    ref="folderInput"
-                    v-bind:class="{ 'is-invalid': directoryExist }"
-                    v-model="directoryName"
-                    v-on:keyup="validateDirName"
-                />
-                <div class="invalid-feedback" v-show="directoryExist">
-                    {{ lang.modal.unzip.fieldFeedback }}
-                </div>
+            <n-radio-group v-model:value="createFolder">
+                <n-radio :value="false">{{ lang.modal.unzip.fieldRadio1 }}</n-radio>
+                <n-radio :value="true">{{ lang.modal.unzip.fieldRadio2 }}</n-radio>
+            </n-radio-group>
+        </div>
+        <n-divider />
+        <div v-if="createFolder" class="mb-3">
+            <label for="fm-folder-name" class="block mb-2">{{ lang.modal.unzip.fieldName }}</label>
+            <n-input
+                id="fm-folder-name"
+                ref="folderInput"
+                v-model:value="directoryName"
+                :status="directoryExist ? 'error' : undefined"
+                @keyup="validateDirName"
+                @keyup.enter="submitActive && unpackArchive()"
+            />
+            <div v-if="directoryExist" class="text-red-500 text-sm mt-1">
+                {{ lang.modal.unzip.fieldFeedback }}
             </div>
-            <span v-else class="text-danger">{{ lang.modal.unzip.warning }}</span>
         </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-info rounded mr-2" v-bind:disabled="!submitActive" v-on:click="unpackArchive">
-                {{ lang.btn.submit }}
-            </button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
-        </div>
+        <span v-else class="text-orange-500">{{ lang.modal.unzip.warning }}</span>
     </div>
 </template>
 
@@ -104,4 +69,11 @@ function unpackArchive() {
         hideModal()
     })
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.submit, color: 'green', icon: 'fa-solid fa-file-zipper', action: unpackArchive, disabled: !submitActive.value },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>

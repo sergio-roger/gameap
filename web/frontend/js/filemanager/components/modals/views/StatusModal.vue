@@ -1,26 +1,19 @@
 <template>
-    <div class="modal-content fm-modal-errors">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.status.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    <div>
+        <div v-if="errors.length">
+            <n-list>
+                <n-list-item v-for="(item, index) in errors" :key="index">
+                    <n-thing>
+                        <template #header>
+                            <n-text type="error">{{ item.status }}</n-text>
+                        </template>
+                        {{ item.message }}
+                    </n-thing>
+                </n-list-item>
+            </n-list>
         </div>
-        <div class="modal-body">
-            <div v-if="errors.length">
-                <ul class="list-unstyled">
-                    <li v-for="(item, index) in errors" v-bind:key="index">{{ item.status }} - {{ item.message }}</li>
-                </ul>
-            </div>
-            <div v-else>
-                <span>{{ lang.modal.status.noErrors }}</span>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-danger rounded mr-2" v-bind:disabled="!errors.length" v-on:click="clearErrors">
-                {{ lang.btn.clear }}
-            </button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
+        <div v-else>
+            <n-text type="success">{{ lang.modal.status.noErrors }}</n-text>
         </div>
     </div>
 </template>
@@ -40,4 +33,11 @@ const errors = computed(() => messages.errors)
 function clearErrors() {
     messages.clearErrors()
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.clear, color: 'red', icon: 'fa-solid fa-broom', action: clearErrors, disabled: !errors.value.length },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>

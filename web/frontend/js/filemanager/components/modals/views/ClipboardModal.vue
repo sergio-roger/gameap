@@ -1,68 +1,67 @@
 <template>
-    <div class="modal-content fm-modal-clipboard">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.clipboard.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <template v-if="clipboard.type">
-                <div class="d-flex justify-content-between">
-                    <div class="w-75 text-truncate">
-                        <span class="badge bg-light text-dark"
-                            ><i class="fa-solid fa-hard-drive pe-1"></i> {{ clipboard.disk }}</span
-                        >
-                    </div>
-                    <div class="text-right text-muted">
-                        <span v-bind:title="`${lang.clipboard.actionType} - ${lang.clipboard[clipboard.type]}`">
-                            <i v-if="clipboard.type === 'copy'" class="fa-regular fa-copy" />
-                            <i v-else class="fa-solid fa-scissors" />
-                        </span>
-                    </div>
+    <div>
+        <template v-if="clipboard.type">
+            <div class="flex justify-between items-center mb-3">
+                <div class="truncate">
+                    <n-tag>
+                        <template #icon>
+                            <i class="fa-solid fa-hard-drive"></i>
+                        </template>
+                        {{ clipboard.disk }}
+                    </n-tag>
                 </div>
-                <hr />
-                <div
-                    class="d-flex justify-content-between"
-                    v-for="(dir, index) in directories"
-                    v-bind:key="`d-${index}`"
-                >
-                    <div class="w-75 text-truncate">
-                        <span><i class="fa-regular fa-folder"></i> {{ dir.name }}</span>
-                    </div>
-                    <div class="text-right">
-                        <button
-                            type="button"
-                            class="btn-close"
-                            v-bind:title="lang.btn.delete"
-                            v-on:click="deleteItem('directories', dir.path)"
-                        ></button>
-                    </div>
+                <div class="text-stone-500">
+                    <span :title="`${lang.clipboard.actionType} - ${lang.clipboard[clipboard.type]}`">
+                        <i v-if="clipboard.type === 'copy'" class="fa-regular fa-copy" />
+                        <i v-else class="fa-solid fa-scissors" />
+                    </span>
                 </div>
-                <div class="d-flex justify-content-between" v-for="(file, index) in files" v-bind:key="`f-${index}`">
-                    <div class="w-75 text-truncate">
-                        <span><i v-bind:class="file.icon" /> {{ file.name }}</span>
-                    </div>
-                    <div class="text-right">
-                        <button
-                            type="button"
-                            class="btn-close"
-                            v-bind:title="lang.btn.delete"
-                            v-on:click="deleteItem('files', file.path)"
-                        ></button>
-                    </div>
+            </div>
+            <n-divider />
+            <div
+                class="flex justify-between items-center py-1"
+                v-for="(dir, index) in directories"
+                :key="`d-${index}`"
+            >
+                <div class="truncate">
+                    <span><i class="fa-regular fa-folder mr-2"></i>{{ dir.name }}</span>
                 </div>
-            </template>
-            <template v-else>
-                <span>{{ lang.clipboard.none }}</span>
-            </template>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-danger rounded mr-2" v-bind:disabled="!clipboard.type" v-on:click="resetClipboardAction">
-                {{ lang.btn.clear }}
-            </button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
-        </div>
+                <div>
+                    <n-button
+                        quaternary
+                        circle
+                        size="small"
+                        :title="lang.btn.delete"
+                        @click="deleteItem('directories', dir.path)"
+                    >
+                        <template #icon>
+                            <i class="fa-solid fa-xmark"></i>
+                        </template>
+                    </n-button>
+                </div>
+            </div>
+            <div class="flex justify-between items-center py-1" v-for="(file, index) in files" :key="`f-${index}`">
+                <div class="truncate">
+                    <span><i :class="[file.icon, 'mr-2']" />{{ file.name }}</span>
+                </div>
+                <div>
+                    <n-button
+                        quaternary
+                        circle
+                        size="small"
+                        :title="lang.btn.delete"
+                        @click="deleteItem('files', file.path)"
+                    >
+                        <template #icon>
+                            <i class="fa-solid fa-xmark"></i>
+                        </template>
+                    </n-button>
+                </div>
+            </div>
+        </template>
+        <template v-else>
+            <span>{{ lang.clipboard.none }}</span>
+        </template>
     </div>
 </template>
 
@@ -105,12 +104,11 @@ function deleteItem(type, path) {
 function resetClipboardAction() {
     fm.resetClipboard()
 }
-</script>
 
-<style lang="scss">
-.fm-modal-clipboard {
-    .modal-body .far {
-        padding-right: 0.5rem;
-    }
-}
-</style>
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.clear, color: 'red', icon: 'fa-solid fa-broom', action: resetClipboardAction, disabled: !clipboard.value.type },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
+</script>

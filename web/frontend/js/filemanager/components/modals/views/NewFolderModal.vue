@@ -1,33 +1,16 @@
 <template>
-    <div class="modal-content fm-modal-folder">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.newFolder.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="fm-folder-name">{{ lang.modal.newFolder.fieldName }}</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="fm-folder-name"
-                    ref="folderNameInput"
-                    v-bind:class="{ 'is-invalid': directoryExist }"
-                    v-model="directoryName"
-                    v-on:keyup="validateDirName"
-                />
-                <div class="invalid-feedback" v-show="directoryExist">
-                    {{ lang.modal.newFolder.fieldFeedback }}
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-info rounded mr-2" v-bind:disabled="!submitActive" v-on:click="addFolder">
-                {{ lang.btn.submit }}
-            </button>
-            <button type="button" class="btn btn-light rounded mr-2" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
+    <div class="mb-3">
+        <label for="fm-folder-name" class="block mb-2">{{ lang.modal.newFolder.fieldName }}</label>
+        <n-input
+            id="fm-folder-name"
+            ref="folderNameInput"
+            v-model:value="directoryName"
+            :status="directoryExist ? 'error' : undefined"
+            @keyup="validateDirName"
+            @keyup.enter="submitActive && addFolder()"
+        />
+        <div v-if="directoryExist" class="text-red-500 text-sm mt-1">
+            {{ lang.modal.newFolder.fieldFeedback }}
         </div>
     </div>
 </template>
@@ -67,4 +50,11 @@ function addFolder() {
         }
     })
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.submit, color: 'green', icon: 'fa-solid fa-folder-plus', action: addFolder, disabled: !submitActive.value },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>

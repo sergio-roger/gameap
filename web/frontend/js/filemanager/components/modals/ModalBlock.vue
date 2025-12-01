@@ -1,25 +1,36 @@
 <template>
-    <transition name="fm-modal">
-        <div class="fm-modal modal z-50 hs-overlay-backdrop transition duration fixed inset-0 bg-stone-900 bg-opacity-50 dark:bg-opacity-80 dark:bg-neutral-900" aria-hidden="true" ref="fmModal" v-on:click="hideModal">
-            <div id="static-modal" tabindex="-1" class="absolute inset-0 h-screen flex justify-center items-center overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
-                <div class="relative p-4 w-full max-w-2xl max-h-full" v-bind:class="modalSize" >
-                    <div class="relative bg-white rounded-lg shadow dark:bg-stone-700">
-                        <div class="p-4 md:p-5 space-y-4">
-                            <div class="modal-dialog modal-dialog-centered" role="document" v-on:click.stop>
-                                <component v-bind:is="modalComponents[modalName]" />
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </transition>
+    <n-modal
+        v-model:show="showModal"
+        class="custom-card"
+        preset="card"
+        :title="currentModalConfig?.title"
+        :bordered="false"
+        :style="{ width: currentModalConfig?.width || '600px' }"
+        :segmented="{ content: 'soft', footer: 'soft' }"
+        transform-origin="center"
+    >
+        <component :is="modalComponents[modalName]" ref="modalRef" />
+        <template #footer v-if="footerButtons.length">
+            <GButton
+                v-for="(btn, i) in footerButtons"
+                :key="i"
+                :color="btn.color"
+                :disabled="btn.disabled"
+                :class="{ 'mr-1': i < footerButtons.length - 1 }"
+                @click="btn.action"
+            >
+                <i v-if="btn.icon" :class="[btn.icon, 'mr-1']" />
+                {{ btn.label }}
+            </GButton>
+        </template>
+    </n-modal>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useModalStore } from '../../stores/useModalStore.js'
+import { useTranslate } from '../../composables/useTranslate.js'
+import GButton from '@/components/GButton.vue'
 import NewFileModal from './views/NewFileModal.vue'
 import NewFolderModal from './views/NewFolderModal.vue'
 import UploadModal from './views/UploadModal.vue'
@@ -37,8 +48,8 @@ import UnzipModal from './views/UnzipModal.vue'
 import AboutModal from './views/AboutModal.vue'
 
 const modal = useModalStore()
-
-const fmModal = ref(null)
+const { lang } = useTranslate()
+const modalRef = ref(null)
 
 const modalComponents = {
     NewFileModal,
@@ -58,28 +69,34 @@ const modalComponents = {
     AboutModal,
 }
 
-const modalName = computed(() => modal.modalName)
-
-const modalSize = computed(() => ({
-    'modal-xl': modalName.value === 'PreviewModal' || modalName.value === 'TextEditModal',
-    'modal-lg': modalName.value === 'VideoPlayerModal',
-    'modal-sm': false,
-}))
-
-onMounted(() => {
-    modal.setModalBlockHeight(fmModal.value.offsetHeight)
+const showModal = computed({
+    get: () => modal.showModal,
+    set: (val) => {
+        if (!val) modal.clearModal()
+    },
 })
 
-function hideModal() {
-    modal.clearModal()
-}
+const modalName = computed(() => modal.modalName)
+
+const modalConfig = computed(() => ({
+    NewFileModal: { title: lang.value.modal.newFile.title, width: '600px' },
+    NewFolderModal: { title: lang.value.modal.newFolder.title, width: '600px' },
+    UploadModal: { title: lang.value.modal.upload.title, width: '600px' },
+    DeleteModal: { title: lang.value.modal.delete.title, width: '600px' },
+    ClipboardModal: { title: lang.value.clipboard.title, width: '600px' },
+    StatusModal: { title: lang.value.modal.status.title, width: '600px' },
+    RenameModal: { title: lang.value.modal.rename.title, width: '600px' },
+    PropertiesModal: { title: lang.value.modal.properties.title, width: '600px' },
+    PreviewModal: { title: lang.value.modal.preview.title, width: '1000px' },
+    TextEditModal: { title: lang.value.modal.editor.title, width: '1000px' },
+    AudioPlayerModal: { title: lang.value.modal.audioPlayer.title, width: '600px' },
+    VideoPlayerModal: { title: lang.value.modal.videoPlayer.title, width: '800px' },
+    ZipModal: { title: lang.value.modal.zip.title, width: '600px' },
+    UnzipModal: { title: lang.value.modal.unzip.title, width: '600px' },
+    AboutModal: { title: lang.value.modal.about.title, width: '600px' },
+}))
+
+const currentModalConfig = computed(() => modalConfig.value[modalName.value])
+
+const footerButtons = computed(() => modalRef.value?.footerButtons || [])
 </script>
-
-<style lang="scss">
-.fm-modal {
-    .modal-xl {
-        max-width: 1000px;
-    }
-}
-
-</style>

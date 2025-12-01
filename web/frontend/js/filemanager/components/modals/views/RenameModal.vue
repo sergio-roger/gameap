@@ -1,35 +1,18 @@
 <template>
-    <div class="modal-content fm-modal-rename">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.rename.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label for="fm-input-rename">{{ lang.modal.rename.fieldName }}</label>
-                <input
-                    type="text"
-                    class="form-control"
-                    id="fm-input-rename"
-                    ref="renameInput"
-                    v-bind:class="{ 'is-invalid': checkName }"
-                    v-model="name"
-                    v-on:keyup="validateName"
-                />
-                <div class="invalid-feedback" v-show="checkName">
-                    {{ lang.modal.rename.fieldFeedback }}
-                    {{ directoryExist ? ` - ${lang.modal.rename.directoryExist}` : '' }}
-                    {{ fileExist ? ` - ${lang.modal.rename.fileExist}` : '' }}
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-info rounded mr-2" v-bind:disabled="submitDisable" v-on:click="rename">
-                {{ lang.btn.submit }}
-            </button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
+    <div class="mb-3">
+        <label for="fm-input-rename" class="block mb-2">{{ lang.modal.rename.fieldName }}</label>
+        <n-input
+            id="fm-input-rename"
+            ref="renameInput"
+            v-model:value="name"
+            :status="checkName && name ? 'error' : undefined"
+            @keyup="validateName"
+            @keyup.enter="!submitDisable && rename()"
+        />
+        <div v-if="checkName && name" class="text-red-500 text-sm mt-1">
+            {{ lang.modal.rename.fieldFeedback }}
+            {{ directoryExist ? ` - ${lang.modal.rename.directoryExist}` : '' }}
+            {{ fileExist ? ` - ${lang.modal.rename.fileExist}` : '' }}
         </div>
     </div>
 </template>
@@ -81,4 +64,11 @@ function rename() {
         hideModal()
     })
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.submit, color: 'green', icon: 'fa-solid fa-pen', action: rename, disabled: submitDisable.value },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>

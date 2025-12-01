@@ -1,40 +1,32 @@
 <template>
-    <div class="modal-content fm-modal-audio-player">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">
-                {{ lang.modal.audioPlayer.title }}
-            </h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <audio ref="fmAudio" controls />
-            <hr />
-            <div
-                class="d-flex justify-content-between py-2 px-2"
-                v-bind:class="playingIndex === index ? 'bg-light' : ''"
-                v-for="(item, index) in audioFiles"
-                v-bind:key="index"
-            >
-                <div class="w-75 text-truncate">
-                    <span class="text-muted pr-2">{{ index }}.</span>
-                    {{ item.basename }}
-                </div>
-                <template v-if="playingIndex === index">
-                    <div v-if="status === 'playing'">
-                        <i v-on:click="togglePlay()" class="fa-solid fa-play active" />
-                    </div>
-                    <div v-else>
-                        <i v-on:click="togglePlay()" class="fa-solid fa-pause" />
-                    </div>
-                </template>
-                <template v-else>
-                    <div>
-                        <i v-on:click="selectTrack(index)" class="fa-solid fa-play" />
-                    </div>
-                </template>
+    <div class="fm-modal-audio-player">
+        <audio ref="fmAudio" controls />
+        <n-divider />
+        <div
+            class="flex justify-between items-center py-2 px-2 rounded cursor-pointer"
+            :class="playingIndex === index ? 'bg-stone-100 dark:bg-stone-800' : 'hover:bg-stone-50 dark:hover:bg-stone-900'"
+            v-for="(item, index) in audioFiles"
+            :key="index"
+        >
+            <div class="truncate flex-1">
+                <span class="text-stone-400 mr-2">{{ index }}.</span>
+                {{ item.basename }}
             </div>
+            <template v-if="playingIndex === index">
+                <n-button quaternary circle @click="togglePlay()">
+                    <template #icon>
+                        <i v-if="status === 'playing'" class="fa-solid fa-pause" />
+                        <i v-else class="fa-solid fa-play text-blue-500" />
+                    </template>
+                </n-button>
+            </template>
+            <template v-else>
+                <n-button quaternary circle @click="selectTrack(index)">
+                    <template #icon>
+                        <i class="fa-solid fa-play" />
+                    </template>
+                </n-button>
+            </template>
         </div>
     </div>
 </template>
@@ -116,25 +108,12 @@ onBeforeUnmount(() => {
         player.value.destroy()
     }
 })
+
+defineExpose({
+    footerButtons: computed(() => []),
+})
 </script>
 
 <style lang="scss">
 @import 'plyr/plyr.scss';
-
-.fm-modal-audio-player {
-    .bi.bi-play-fill {
-        color: gray;
-        opacity: 0.1;
-        cursor: pointer;
-
-        &:hover {
-            opacity: 0.5;
-        }
-
-        &.active {
-            opacity: 1;
-            color: deepskyblue;
-        }
-    }
-}
 </style>

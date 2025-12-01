@@ -1,39 +1,22 @@
 <template>
-    <div class="modal-content fm-modal-zip">
-        <div class="modal-header grid grid-cols-2">
-            <h5 class="modal-title">{{ lang.modal.zip.title }}</h5>
-            <button type="button" class="btn-close" aria-label="Close" v-on:click="hideModal">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    <div>
+        <label for="fm-zip-name" class="block mb-2">{{ lang.modal.zip.fieldName }}</label>
+        <n-input-group class="mb-3">
+            <n-input
+                id="fm-zip-name"
+                ref="archiveInput"
+                v-model:value="archiveName"
+                :status="archiveExist ? 'error' : undefined"
+                @keyup="validateArchiveName"
+                @keyup.enter="submitActive && createArchive()"
+            />
+            <n-input-group-label>.zip</n-input-group-label>
+        </n-input-group>
+        <div v-if="archiveExist" class="text-red-500 text-sm mb-3">
+            {{ lang.modal.zip.fieldFeedback }}
         </div>
-        <div class="modal-body">
-            <label for="fm-zip-name">{{ lang.modal.zip.fieldName }}</label>
-            <div class="input-group mb-3">
-                <input
-                    type="text"
-                    class="form-control"
-                    id="fm-zip-name"
-                    ref="archiveInput"
-                    v-bind:class="{ 'is-invalid': archiveExist }"
-                    v-model="archiveName"
-                    v-on:keyup="validateArchiveName"
-                />
-                <div class="input-group-append">
-                    <span class="input-group-text">.zip</span>
-                </div>
-                <div class="invalid-feedback" v-show="archiveExist">
-                    {{ lang.modal.zip.fieldFeedback }}
-                </div>
-            </div>
-            <hr />
-            <selected-file-list />
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-info rounded mr-2" v-bind:disabled="!submitActive" v-on:click="createArchive">
-                {{ lang.btn.submit }}
-            </button>
-            <button type="button" class="btn btn-light rounded" v-on:click="hideModal">{{ lang.btn.cancel }}</button>
-        </div>
+        <n-divider />
+        <selected-file-list />
     </div>
 </template>
 
@@ -71,4 +54,11 @@ function createArchive() {
         hideModal()
     })
 }
+
+defineExpose({
+    footerButtons: computed(() => [
+        { label: lang.value.btn.submit, color: 'green', icon: 'fa-solid fa-file-zipper', action: createArchive, disabled: !submitActive.value },
+        { label: lang.value.btn.cancel, color: 'black', icon: 'fa-solid fa-xmark', action: hideModal },
+    ]),
+})
 </script>
