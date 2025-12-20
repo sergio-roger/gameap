@@ -19,7 +19,7 @@ require (
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/pkg/errors v0.9.1
 	github.com/pressly/goose/v3 v3.26.0
-	github.com/redis/go-redis/v9 v9.16.0
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/rs/cors v1.11.1
 	github.com/rs/xid v1.6.0
 	github.com/rumblefrog/go-a2s v1.0.2
@@ -29,7 +29,7 @@ require (
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.45.0
 	golang.org/x/text v0.31.0
-	modernc.org/sqlite v1.40.1
+	modernc.org/sqlite v1.41.0
 )
 
 require (
