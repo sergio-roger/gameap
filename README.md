@@ -7,7 +7,7 @@
 GameAP is a free and open-source game server management panel that allows you to easily manage and deploy game servers.
 It provides a user-friendly web interface for managing game servers, users, and configurations.
 
-This repository is under active development.
+Demo: https://demo.gameap.com
 
 ## Requirements
 
