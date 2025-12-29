@@ -121,16 +121,6 @@ jobs:
           flag-name: Go-${{ matrix.go }}
           parallel: true
 
-      - name: Build gameap binary
-        run: go build -o gameap ./cmd/gameap
-
-      - name: Upload gameap binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: gameap-${{ matrix.os }}
-          path: gameap
-          retention-days: 1
-
   finish:
     needs: test
     runs-on: ubuntu-latest
