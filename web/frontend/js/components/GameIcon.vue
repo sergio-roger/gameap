@@ -23,6 +23,8 @@ const icons = {
   cssv34: 'gicon gicon-counter-strike-source',
   cstrike: 'gicon gicon-counter-strike1',
   czero: 'gicon gicon-counter-strike1',
+  dod: 'gicon gicon-day-of-defeat',
+  dods: 'gicon gicon-day-of-defeat',
   dontstarve: 'gicon gicon-dont-starve',
   dontstarvetogether: 'gicon gicon-dont-starve',
   dst: 'gicon gicon-dont-starve',

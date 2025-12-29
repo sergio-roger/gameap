@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'gicon';
-  src:  url('fonts/gicon.eot?cc7agj');
-  src:  url('fonts/gicon.eot?cc7agj#iefix') format('embedded-opentype'),
-    url('fonts/gicon.ttf?cc7agj') format('truetype'),
-    url('fonts/gicon.woff?cc7agj') format('woff'),
-    url('fonts/gicon.svg?cc7agj#gicon') format('svg');
+  src:  url('fonts/gicon.eot?47lr3q');
+  src:  url('fonts/gicon.eot?47lr3q#iefix') format('embedded-opentype'),
+    url('fonts/gicon.ttf?47lr3q') format('truetype'),
+    url('fonts/gicon.woff?47lr3q') format('woff'),
+    url('fonts/gicon.svg?47lr3q#gicon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -102,4 +102,7 @@
 }
 .gicon-quake-2:before {
   content: "\e917";
+}
+.gicon-day-of-defeat:before {
+  content: "\e918";
 }
