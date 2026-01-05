@@ -69,6 +69,7 @@ import (
 	"github.com/gameap/gameap/internal/api/nodes/putnode"
 	"github.com/gameap/gameap/internal/api/profile/getprofile"
 	"github.com/gameap/gameap/internal/api/profile/putprofile"
+	"github.com/gameap/gameap/internal/api/publicconfig"
 	"github.com/gameap/gameap/internal/api/servers/deleteserver"
 	"github.com/gameap/gameap/internal/api/servers/getabilities"
 	"github.com/gameap/gameap/internal/api/servers/getconsole"
@@ -244,6 +245,12 @@ func apiRoutes(c container, router *mux.Router) *mux.Router {
 			Method:           http.MethodGet,
 			Path:             "/api/health",
 			Handler:          gethealth.NewGetHealthHandler(c.DB(), c.Responder()),
+			AllowGuestAccess: true,
+		},
+		{
+			Method:           http.MethodGet,
+			Path:             "/api/config/public",
+			Handler:          publicconfig.NewHandler(c.Config(), c.Responder()),
 			AllowGuestAccess: true,
 		},
 

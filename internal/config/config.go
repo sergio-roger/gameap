@@ -83,6 +83,10 @@ type Config struct {
 	GlobalAPI struct {
 		URL string `env:"GLOBAL_API_URL" envDefault:"https://api.gameap.com"`
 	}
+
+	UI struct {
+		DefaultLanguage string `env:"DEFAULT_LANGUAGE" envDefault:""`
+	}
 }
 
 func LoadConfig() (*Config, error) {
@@ -123,6 +127,8 @@ func normalizeConfigValues(cfg *Config) {
 	case "postgres", "postgresql", "pgx", "pg", "pgsql": //nolint:goconst,nolintlint
 		cfg.Cache.Driver = "postgres"
 	}
+
+	cfg.UI.DefaultLanguage = strings.ToLower(cfg.UI.DefaultLanguage)
 }
 
 func (c *Config) TLSEnabled() bool {
