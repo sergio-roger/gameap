@@ -4,6 +4,7 @@ services:
   gameap:
     image: gameap/gameap:latest
     container_name: gameap
+    user: root
     ports:
       - "8025:8025"
     environment:
@@ -20,6 +21,7 @@ services:
       LOGGER_LEVEL: info
     volumes:
       - gameap-storage:/var/lib/gameap/files
+      - gameap-certs:/app/certs
     networks:
       - internal_network
     restart: unless-stopped
