@@ -20,9 +20,6 @@ services:
       LOGGER_LEVEL: info
     volumes:
       - gameap-storage:/var/lib/gameap/files
-    depends_on:
-      - postgres_global
-      - redis_server
     networks:
       - internal_network
     restart: unless-stopped
