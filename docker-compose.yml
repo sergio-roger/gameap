@@ -21,8 +21,8 @@ services:
     volumes:
       - gameap-storage:/var/lib/gameap/files
     depends_on:
-      - postgres
-      - redis
+      - postgres_global
+      - redis_server
     networks:
       - internal_network
     restart: unless-stopped
