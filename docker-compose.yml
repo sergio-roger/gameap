@@ -5,7 +5,7 @@ services:
     image: gameap/gameap:latest
     container_name: gameap
     ports:
-      - "8025:8025"
+      - "8025:80"
     environment:
       HTTP_HOST: 0.0.0.0
       HTTP_PORT: 8025
