@@ -28,8 +28,7 @@ services:
 
 volumes:
   gameap-storage:
-  postgres-data:
-  redis-data:
+  gameap-certs:
 
 networks:
   internal_network:
