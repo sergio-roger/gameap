@@ -5,49 +5,26 @@ services:
     image: gameap/gameap:latest
     container_name: gameap
     ports:
-      - "8025:80"
+      - "8025:8025"
     environment:
       HTTP_HOST: 0.0.0.0
       HTTP_PORT: 8025
       DATABASE_DRIVER: postgres
-      DATABASE_URL: postgres://gameap:gameap@postgres:5432/gameap?sslmode=disable
-      ENCRYPTION_KEY: change-me-in-production
-      AUTH_SECRET: change-me-in-production
+      DATABASE_URL: postgres://gameap:user12das@postgres_global:5432/gameap?sslmode=disable
+      ENCRYPTION_KEY: 1c3f1e89f909c50820c815c8cc9d26c342b2ac97c4335d9623eb20b154e330c6
+      AUTH_SECRET: 3b9364d2305006c3fad856377400dde514a5d15553dc89953afbc887ca8c52d9
       CACHE_DRIVER: redis
-      CACHE_REDIS_ADDR: redis:6379
+      CACHE_REDIS_ADDR: redis_server:6379
       FILES_DRIVER: local
       FILES_LOCAL_BASE_PATH: /var/lib/gameap/files
       LOGGER_LEVEL: info
     volumes:
-      - gameap-storage:/var/lib/gameap
+      - gameap-storage:/var/lib/gameap/files
     depends_on:
       - postgres
       - redis
     networks:
-      - gameap-network
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:17-alpine
-    container_name: gameap-postgres
-    environment:
-      POSTGRES_DB: gameap
-      POSTGRES_USER: gameap
-      POSTGRES_PASSWORD: gameap
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    networks:
-      - gameap-network
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    container_name: gameap-redis
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data:/data
-    networks:
-      - gameap-network
+      - internal_network
     restart: unless-stopped
 
 volumes:
@@ -56,5 +33,5 @@ volumes:
   redis-data:
 
 networks:
-  gameap-network:
-    driver: bridge
+  internal_network:
+    external: true
